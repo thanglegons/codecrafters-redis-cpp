@@ -20,6 +20,7 @@ void Server::start_accept() {
 void Server::handle_accept(std::shared_ptr<Session> session,
                            const asio::error_code &error_code) {
   if (!error_code) {
+    std::cout << "Connected\n";
     session->start();
   } else {
     std::cout << "Error when accept = " << error_code.message() << "\n";

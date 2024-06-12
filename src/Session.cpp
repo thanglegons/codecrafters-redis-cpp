@@ -1,4 +1,5 @@
 #include "Session.h"
+#include "Parser.h"
 #include <iostream>
 
 Session::Session(asio::io_context &io_context) : socket_(io_context) {}
@@ -22,10 +23,17 @@ void Session::handle_read(const asio::error_code &error_code, size_t len) {
   if (!error_code) {
     // process the received message
     std::string message(data_, len);
-    std::cout << "Received (" << message << ")\n";
 
-    std::string return_message = "+PONG\r\n";
-    asio::async_write(socket_, asio::buffer(return_message),
+    auto commands = Parser::parse(message);
+    std::string return_message = "+DEFAULT\r\n";
+    if (!commands.empty() && commands[0] == "ping") {
+      return_message = "+PONG\r\n";
+    } else if (commands.size() == 2 && commands[0] == "echo") {
+      return_message = "+" + commands[1] + "\r\n";
+    }
+    std::copy(return_message.begin(), return_message.end(), data_);
+
+    asio::async_write(socket_, asio::buffer(data_, return_message.size()),
                       [this, self = shared_from_this()](
                           const asio::error_code &error_code, size_t len) {
                         handle_write(error_code, len);
@@ -42,5 +50,7 @@ void Session::handle_read(const asio::error_code &error_code, size_t len) {
 void Session::handle_write(const asio::error_code &error_code, size_t len) {
   if (!error_code) {
     start();
+  } else {
+    std::cout << "Read failed, error = " << error_code.message() << "\n";
   }
 }
