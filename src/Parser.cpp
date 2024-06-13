@@ -1,5 +1,4 @@
 #include "Parser.h"
-#include <algorithm>
 #include <cctype>
 #include <iostream>
 #include <sstream>
@@ -27,8 +26,6 @@ std::vector<std::string> Parser::parse(const std::string &command) {
         int str_len = std::stoi(line.substr(1));
         std::string bulk_str(str_len, '\0');
         iss.read(bulk_str.data(), str_len);
-        std::transform(bulk_str.begin(), bulk_str.end(), bulk_str.begin(),
-                       [](auto c) { return tolower(c); });
         results.emplace_back(std::move(bulk_str));
         iss.ignore(2);
       } else {

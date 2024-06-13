@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CommandHandler.h"
+#include "Storage.h"
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
 #include <asio/write.hpp>
@@ -7,9 +9,9 @@
 using asio::ip::tcp;
 class Session : public std::enable_shared_from_this<Session> {
 public:
-  static std::shared_ptr<Session> create(asio::io_context &io_context); 
+  static std::shared_ptr<Session> create(asio::io_context &io_context, std::shared_ptr<KVStorage> data); 
   
-  Session(asio::io_context &io_context);
+  Session(asio::io_context &io_context, std::shared_ptr<KVStorage> data);
 
   tcp::socket &get_socket();
 
@@ -25,4 +27,5 @@ private:
 
   tcp::socket socket_;
   char data_[kBufferSize];
+  CommandHandler command_handler_;
 };

@@ -1,12 +1,12 @@
 #include "Session.h"
-#include "Parser.h"
+#include "CommandHandler.h"
 #include <iostream>
 
-Session::Session(asio::io_context &io_context) : socket_(io_context) {}
-
-std::shared_ptr<Session> Session::create(asio::io_context &io_context) {
-  return std::make_shared<Session>(io_context);
+std::shared_ptr<Session> Session::create(asio::io_context &io_context, std::shared_ptr<KVStorage> data) {
+  return std::make_shared<Session>(io_context, std::move(data));
 }
+
+Session::Session(asio::io_context &io_context, std::shared_ptr<KVStorage> data) : socket_(io_context), command_handler_(std::move(data)) {}
 
 tcp::socket &Session::get_socket() { return socket_; }
 
@@ -24,13 +24,7 @@ void Session::handle_read(const asio::error_code &error_code, size_t len) {
     // process the received message
     std::string message(data_, len);
 
-    auto commands = Parser::parse(message);
-    std::string return_message = "+DEFAULT\r\n";
-    if (!commands.empty() && commands[0] == "ping") {
-      return_message = "+PONG\r\n";
-    } else if (commands.size() == 2 && commands[0] == "echo") {
-      return_message = "+" + commands[1] + "\r\n";
-    }
+    auto return_message = command_handler_.handle_raw_command(message);
     std::copy(return_message.begin(), return_message.end(), data_);
 
     asio::async_write(socket_, asio::buffer(data_, return_message.size()),

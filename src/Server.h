@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Session.h"
+#include "Storage.h"
 #include <asio/error_code.hpp>
 #include <asio/io_context.hpp>
 
@@ -16,4 +17,5 @@ private:
 
   tcp::acceptor acceptor_;
   asio::io_context& io_context;
+  std::shared_ptr<KVStorage> data_;
 };
