@@ -7,7 +7,7 @@ CommandHandler::CommandHandler(std::shared_ptr<KVStorage> data) : data_(data) {}
 
 std::string CommandHandler::handle_raw_command(const std::string &raw_command) {
   auto commands = Parser::parse(raw_command);
-  std::string return_message = "+-1\r\n";
+  std::string return_message = "$-1\r\n";
 
   if (commands.empty()) {
     return return_message;
@@ -21,14 +21,19 @@ std::string CommandHandler::handle_raw_command(const std::string &raw_command) {
     return_message = "+PONG\r\n";
   } else if (commands.size() == 2 && main_command == "echo") {
     return_message = "+" + commands[1] + "\r\n";
-  } else if (commands.size() == 3 && main_command == "set") {
-    data_->set(std::move(commands[1]), std::move(commands[2]));
-    return_message = "+OK\r\n";
+  } else if (main_command == "set") {
+    if (commands.size() == 3) {
+      data_->set(std::move(commands[1]), std::move(commands[2]));
+      return_message = "+OK\r\n";
+    } else if (commands.size() == 5 && commands[3] == "px") {
+        data_->set(std::move(commands[1]), std::move(commands[2]), std::stoi(commands[4]));
+        return_message = "+OK\r\n";
+    }
   } else if (commands.size() == 2 && main_command == "get") {
     const auto &key = commands[1];
     auto ret = data_->get(key);
     if (ret == std::nullopt) {
-      return_message = "+-1\r\n";
+      return_message = "$-1\r\n";
     } else {
       return_message = "+" + ret.value() + "\r\n";
     }
