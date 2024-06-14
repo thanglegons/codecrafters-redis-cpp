@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 
-std::vector<std::string> Parser::parse(const std::string &command) {
+std::vector<std::string> Parser::decode(const std::string &command) {
   std::istringstream iss(command);
   std::string line;
   if (!std::getline(iss, line)) {
@@ -36,4 +36,12 @@ std::vector<std::string> Parser::parse(const std::string &command) {
     std::cout << "Incorrect format, command = " << command << "\n";
   }
   return results;
+}
+
+std::string Parser::encodeString(const std::string& str) {
+  return "+" + str + "\r\n";
+}
+
+std::string Parser::encodeBulkString(const std::string &str) {
+  return "$" + std::to_string(str.size()) + "\r\n" + str + "\r\n";
 }

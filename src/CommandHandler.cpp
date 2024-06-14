@@ -1,43 +1,44 @@
 #include "CommandHandler.h"
 #include "Parser.h"
 #include "Storage.h"
+#include "commands/Echo.h"
+#include "commands/Get.h"
+#include "commands/Info.h"
+#include "commands/Ping.h"
+#include "commands/Set.h"
 #include <algorithm>
 
 CommandHandler::CommandHandler(std::shared_ptr<KVStorage> data) : data_(data) {}
 
 std::string CommandHandler::handle_raw_command(const std::string &raw_command) {
-  auto commands = Parser::parse(raw_command);
-  std::string return_message = "$-1\r\n";
+  auto commands = Parser::decode(raw_command);
 
   if (commands.empty()) {
-    return return_message;
+    return kErrorReturn;
   }
 
   std::string main_command = commands[0];
   std::transform(main_command.begin(), main_command.end(), main_command.begin(),
                  [](const auto c) { return tolower(c); });
 
-  if (!commands.empty() && main_command == "ping") {
-    return_message = "+PONG\r\n";
-  } else if (commands.size() == 2 && main_command == "echo") {
-    return_message = "+" + commands[1] + "\r\n";
+  std::optional<std::string> opt_return_message;
+  if (main_command == "ping") {
+    opt_return_message = commands::Ping()();
+  }
+  if (main_command == "echo") {
+    opt_return_message = commands::Echo(commands.begin() + 1, commands.end())();
   } else if (main_command == "set") {
-    if (commands.size() == 3) {
-      data_->set(std::move(commands[1]), std::move(commands[2]));
-      return_message = "+OK\r\n";
-    } else if (commands.size() == 5 && commands[3] == "px") {
-        data_->set(std::move(commands[1]), std::move(commands[2]), std::stoi(commands[4]));
-        return_message = "+OK\r\n";
-    }
-  } else if (commands.size() == 2 && main_command == "get") {
-    const auto &key = commands[1];
-    auto ret = data_->get(key);
-    if (ret == std::nullopt) {
-      return_message = "$-1\r\n";
-    } else {
-      return_message = "+" + ret.value() + "\r\n";
-    }
+    opt_return_message =
+        commands::Set(commands.begin() + 1, commands.end(), data_)();
+  } else if (main_command == "get") {
+    opt_return_message =
+        commands::Get(commands.begin() + 1, commands.end(), data_)();
+  } else if (main_command == "info") {
+    opt_return_message = commands::Info(commands.begin() + 1, commands.end())();
   }
 
-  return return_message;
+  if (!opt_return_message.has_value()) {
+    return kErrorReturn;
+  }
+  return opt_return_message.value();
 }

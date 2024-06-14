@@ -10,4 +10,6 @@ public:
 
 private:
   std::shared_ptr<KVStorage> data_;
+
+  inline static const std::string kErrorReturn = "$-1\r\n";
 };

@@ -4,7 +4,7 @@
 #include <limits>
 #include <optional>
 
-std::optional<std::string> KVStorage::get(const std::string &k) {
+std::optional<std::string> KVStorage::get(const std::string &k) const {
   auto current_time_ms = get_current_timestamp_ms();
   auto it = data_.find(k);
   if (it == data_.end()) {
