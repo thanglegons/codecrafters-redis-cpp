@@ -1,4 +1,5 @@
 #include "Server.h"
+#include "Helpers.h"
 #include <asio/io_context.hpp>
 #include <iostream>
 #include <memory>
@@ -31,11 +32,14 @@ void Server::handle_accept(std::shared_ptr<Session> session,
 }
 
 std::shared_ptr<ReplicationInfo> Server::init_replication_info(const ServerConfig& config) {
+  static constexpr int kReplidLen = 40;
   auto info = std::make_shared<ReplicationInfo>();
   if (config.replicaof.has_value()) {
     info->is_master = false;
   } else {
     info->is_master = true;
   }
+  info->master_repl_offset = 0;
+  info->master_replid = random_string(kReplidLen);
   return info;
 }
