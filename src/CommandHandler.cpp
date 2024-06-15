@@ -8,7 +8,10 @@
 #include "commands/Set.h"
 #include <algorithm>
 
-CommandHandler::CommandHandler(std::shared_ptr<KVStorage> data) : data_(data) {}
+CommandHandler::CommandHandler(
+    std::shared_ptr<KVStorage> data,
+    std::shared_ptr<ReplicationInfo> replication_info)
+    : data_(std::move(data)), replication_info_(std::move(replication_info)) {}
 
 std::string CommandHandler::handle_raw_command(const std::string &raw_command) {
   auto commands = Parser::decode(raw_command);
@@ -34,7 +37,7 @@ std::string CommandHandler::handle_raw_command(const std::string &raw_command) {
     opt_return_message =
         commands::Get(commands.begin() + 1, commands.end(), data_)();
   } else if (main_command == "info") {
-    opt_return_message = commands::Info(commands.begin() + 1, commands.end())();
+    opt_return_message = commands::Info(commands.begin() + 1, commands.end(), replication_info_)();
   }
 
   if (!opt_return_message.has_value()) {

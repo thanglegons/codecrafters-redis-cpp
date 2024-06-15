@@ -1,12 +1,12 @@
 #include "Session.h"
 #include "CommandHandler.h"
+#include "ReplicationInfo.h"
 #include <iostream>
 
-std::shared_ptr<Session> Session::create(asio::io_context &io_context, std::shared_ptr<KVStorage> data) {
-  return std::make_shared<Session>(io_context, std::move(data));
-}
-
-Session::Session(asio::io_context &io_context, std::shared_ptr<KVStorage> data) : socket_(io_context), command_handler_(std::move(data)) {}
+Session::Session(asio::io_context &io_context, std::shared_ptr<KVStorage> data,
+                 std::shared_ptr<ReplicationInfo> replication_info)
+    : socket_(io_context),
+      command_handler_(std::move(data), std::move(replication_info)) {}
 
 tcp::socket &Session::get_socket() { return socket_; }
 

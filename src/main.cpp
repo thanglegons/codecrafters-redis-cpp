@@ -4,9 +4,21 @@
 #include <iostream>
 
 struct Argument {
-  uint32_t port{kDefaultPort};
+  int16_t port{kDefaultPort};
+  
+  std::optional<std::string> replicaof_host;
+  std::optional<int16_t> replicaof_port;
 
-  static constexpr uint32_t kDefaultPort = 6379;
+  static constexpr int16_t kDefaultPort = 6379;
+
+  ServerConfig to_server_config() {
+    ServerConfig config;
+    config.port = port;
+    if (replicaof_port.has_value()) {
+      config.replicaof = {replicaof_host.value(), replicaof_port.value()};
+    }
+    return config;
+  }
 };
 
 Argument read_argument(int argc, char **argv) {
@@ -23,11 +35,22 @@ Argument read_argument(int argc, char **argv) {
 
   Argument argument;
   // Check if the port argument was provided
-  if (args.find("port") != args.end()) {
-    int port = std::stoi(args["port"]);
+  if (auto it = args.find("port"); it != args.end()) {
+    int port = std::stoi(it->second);
     argument.port = port;
   }
 
+  // Check if replicaof argument was provided
+  if (auto it = args.find("replicaof"); it != args.end()) {
+    std::istringstream iss(it->second);
+    std::string host;
+    int64_t port;
+    iss >> host;
+    iss >> port;
+    argument.replicaof_host = std::move(host);
+    argument.replicaof_port = port;
+  }
+  
   return argument;
 }
 
@@ -41,10 +64,11 @@ int main(int argc, char **argv) {
   std::cout << "Logs from your program will appear here!\n";
 
   auto argument = read_argument(argc, argv);
+  auto server_config = argument.to_server_config();
 
   try {
     asio::io_context io_context;
-    Server server(io_context, argument.port);
+    Server server(io_context, server_config);
     io_context.run();
   } catch (std::exception &e) {
     std::cout << "Exception: " << e.what() << "\n";
