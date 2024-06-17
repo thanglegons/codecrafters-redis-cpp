@@ -5,6 +5,7 @@
 #include "commands/Get.h"
 #include "commands/Info.h"
 #include "commands/Ping.h"
+#include "commands/Replconf.h"
 #include "commands/Set.h"
 #include <algorithm>
 
@@ -23,22 +24,24 @@ std::string CommandHandler::handle_raw_command(const std::string &raw_command) {
   std::string main_command = commands[0];
   std::transform(main_command.begin(), main_command.end(), main_command.begin(),
                  [](const auto c) { return tolower(c); });
-
-  std::optional<std::string> opt_return_message;
-  if (main_command == "ping") {
-    opt_return_message = commands::Ping()();
-  }
-  if (main_command == "echo") {
-    opt_return_message = commands::Echo(commands.begin() + 1, commands.end())();
-  } else if (main_command == "set") {
-    opt_return_message =
-        commands::Set(commands.begin() + 1, commands.end(), data_)();
-  } else if (main_command == "get") {
-    opt_return_message =
-        commands::Get(commands.begin() + 1, commands.end(), data_)();
-  } else if (main_command == "info") {
-    opt_return_message = commands::Info(commands.begin() + 1, commands.end(), replication_info_)();
-  }
+  
+  auto opt_return_message = [&]() -> std::optional<std::string> {
+    if (main_command == "ping") {
+      return commands::Ping()();
+    } else if (main_command == "echo") {
+      return commands::Echo(commands.begin() + 1, commands.end())();
+    } else if (main_command == "set") {
+      return commands::Set(commands.begin() + 1, commands.end(), data_)();
+    } else if (main_command == "get") {
+      return commands::Get(commands.begin() + 1, commands.end(), data_)();
+    } else if (main_command == "info") {
+      return commands::Info(commands.begin() + 1, commands.end(),
+                            replication_info_)();
+    } else if (main_command == "replconf") {
+      return commands::Replconf(commands.begin() + 1, commands.end())();
+    }
+    return std::nullopt;
+  }();
 
   if (!opt_return_message.has_value()) {
     return kErrorReturn;
