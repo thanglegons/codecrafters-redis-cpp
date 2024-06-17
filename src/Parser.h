@@ -10,4 +10,6 @@ public:
     static std::string encodeString(const std::string& str);
 
     static std::string encodeBulkString(const std::string& str);
+
+    static std::string encodeRespArray(const std::vector<std::string>);
 };

@@ -28,6 +28,8 @@ private:
 
   std::shared_ptr<ReplicationInfo> init_replication_info(const ServerConfig& config);
 
+  bool master_handshake(const ServerConfig&);
+
   tcp::acceptor acceptor_;
   asio::io_context &io_context;
   std::shared_ptr<KVStorage> data_;

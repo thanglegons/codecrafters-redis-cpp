@@ -38,10 +38,18 @@ std::vector<std::string> Parser::decode(const std::string &command) {
   return results;
 }
 
-std::string Parser::encodeString(const std::string& str) {
+std::string Parser::encodeString(const std::string &str) {
   return "+" + str + "\r\n";
 }
 
 std::string Parser::encodeBulkString(const std::string &str) {
   return "$" + std::to_string(str.size()) + "\r\n" + str + "\r\n";
+}
+
+std::string Parser::encodeRespArray(const std::vector<std::string> arr) {
+  std::string result = "*" + std::to_string(arr.size()) + "\r\n";
+  for (const auto &str : arr) {
+    result += "$" + std::to_string(str.size()) + "\r\n" + str + "\r\n";
+  }
+  return result;
 }
