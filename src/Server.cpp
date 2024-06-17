@@ -75,7 +75,6 @@ bool Server::master_handshake(const ServerConfig &config) {
         {"REPLCONF", "capa", "sync2"}};
     for (const auto &command : commands) {
       std::string message = Parser::encodeRespArray(command);
-      std::cout << "message = " << message << std::endl;
       asio::error_code command_ec;
       asio::write(socket, asio::buffer(message), command_ec);
       if (command_ec) {
