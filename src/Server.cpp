@@ -69,10 +69,12 @@ bool Server::master_handshake(const ServerConfig &config) {
     // step1: send PING to master
     // step2: send REPLCONF listening-port <port>
     // step3: send REPLCONF capa sync2
+    // step4: send PSYNC ? -1
     std::vector<std::vector<std::string>> commands = {
         {"PING"},
         {"REPLCONF", "listening-port", std::to_string(config.port)},
-        {"REPLCONF", "capa", "sync2"}};
+        {"REPLCONF", "capa", "sync2"},
+        {"PSYNC", "?", "-1"}};
     for (const auto &command : commands) {
       std::string message = Parser::encodeRespArray(command);
       asio::error_code command_ec;
