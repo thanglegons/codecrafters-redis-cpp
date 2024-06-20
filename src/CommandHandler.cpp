@@ -7,6 +7,7 @@
 #include "commands/Ping.h"
 #include "commands/Replconf.h"
 #include "commands/Set.h"
+#include "commands/Psync.h"
 #include <algorithm>
 
 CommandHandler::CommandHandler(
@@ -39,6 +40,8 @@ std::string CommandHandler::handle_raw_command(const std::string &raw_command) {
                             replication_info_)();
     } else if (main_command == "replconf") {
       return commands::Replconf(commands.begin() + 1, commands.end())();
+    } else if (main_command == "psync") {
+      return commands::Psync(commands.begin() + 1, commands.end(), replication_info_)();
     }
     return std::nullopt;
   }();
