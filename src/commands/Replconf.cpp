@@ -3,11 +3,7 @@
 
 namespace commands {
 
-Replconf::Replconf(const std::vector<std::string>::iterator begin,
-                   const std::vector<std::string>::iterator end)
-    : begin(begin), end(end) {}
-
-std::optional<std::string> Replconf::operator()() {
+std::optional<std::string> Replconf::inner_handle() {
     return Parser::encodeString("OK");
 }
 } // namespace commands

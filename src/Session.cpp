@@ -6,7 +6,7 @@
 Session::Session(asio::io_context &io_context, std::shared_ptr<KVStorage> data,
                  std::shared_ptr<ReplicationInfo> replication_info)
     : socket_(io_context),
-      command_handler_(std::move(data), std::move(replication_info)) {}
+      command_handler_(std::move(data), std::move(replication_info), this) {}
 
 tcp::socket &Session::get_socket() { return socket_; }
 
@@ -24,14 +24,8 @@ void Session::handle_read(const asio::error_code &error_code, size_t len) {
     // process the received message
     std::string message(data_, len);
 
-    auto return_message = command_handler_.handle_raw_command(message);
-    std::copy(return_message.begin(), return_message.end(), data_);
+    command_handler_.handle_raw_command(message);
 
-    asio::async_write(socket_, asio::buffer(data_, return_message.size()),
-                      [this, self = shared_from_this()](
-                          const asio::error_code &error_code, size_t len) {
-                        handle_write(error_code, len);
-                      });
   } else if (error_code == asio::error::eof) {
     std::cout << "Connection closed by peer\n";
   } else if (error_code == asio::error::operation_aborted) {

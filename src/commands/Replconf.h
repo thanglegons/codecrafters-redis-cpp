@@ -1,16 +1,12 @@
+#include "Command.h"
 #include <optional>
 #include <string>
-#include <vector>
 
 namespace commands {
-struct Replconf {
-  Replconf(const std::vector<std::string>::iterator begin,
-           const std::vector<std::string>::iterator end);
+struct Replconf : public Command {
+  Replconf(const std::span<std::string> &params, Session *session)
+      : Command(params, session) {}
 
-  std::optional<std::string> operator()();
-
-private:
-  const std::vector<std::string>::iterator begin;
-  const std::vector<std::string>::iterator end;
+  std::optional<std::string> inner_handle() override;
 };
 } // namespace commands

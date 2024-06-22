@@ -2,7 +2,7 @@
 #include "Parser.h"
 
 namespace commands {
-std::optional<std::string> Ping::operator()() {
+std::optional<std::string> Ping::inner_handle() {
   return Parser::encodeString("PONG");
 }
 } // namespace commands

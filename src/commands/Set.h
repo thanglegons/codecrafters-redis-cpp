@@ -1,20 +1,17 @@
+#include "Command.h"
 #include "Storage.h"
 #include <memory>
 #include <optional>
-#include <string>
-#include <vector>
 
 namespace commands {
-struct Set {
-  Set(const std::vector<std::string>::iterator begin,
-      const std::vector<std::string>::iterator end,
-      const std::shared_ptr<KVStorage> data);
+struct Set : public Command {
+  Set(const std::span<std::string> &params, Session *session,
+      const std::shared_ptr<KVStorage> data)
+      : Command(params, session), data_(data) {}
 
-  std::optional<std::string> operator()();
+  std::optional<std::string> inner_handle();
 
 private:
-  const std::vector<std::string>::iterator begin;
-  const std::vector<std::string>::iterator end;
-  const std::shared_ptr<KVStorage> data;
+  const std::shared_ptr<KVStorage> data_;
 };
 } // namespace commands

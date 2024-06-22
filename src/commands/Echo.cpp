@@ -3,15 +3,13 @@
 
 namespace commands {
 
-Echo::Echo(const std::vector<std::string>::iterator begin,
-           const std::vector<std::string>::iterator end)
-    : begin(begin), end(end) {}
-
-std::optional<std::string> Echo::operator()() {
-  int num_params = std::distance(begin, end);
+std::optional<std::string> Echo::inner_handle() {
+  int num_params = params_.size();
   if (num_params != 1) {
     return std::nullopt;
   }
-  return Parser::encodeString(*begin);
+  auto parsed_message = Parser::encodeString(params_[0]);
+  return parsed_message;
 }
+
 } // namespace commands

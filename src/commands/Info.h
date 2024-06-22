@@ -1,20 +1,16 @@
+#include "Command.h"
 #include "ReplicationInfo.h"
 #include <memory>
-#include <optional>
-#include <string>
-#include <vector>
 
 namespace commands {
-struct Info {
-  Info(const std::vector<std::string>::iterator begin,
-       const std::vector<std::string>::iterator end,
-       const std::shared_ptr<const ReplicationInfo> replication_info);
+struct Info : public Command {
+  Info(const std::span<std::string> &params, Session *session,
+       const std::shared_ptr<const ReplicationInfo> replication_info)
+      : Command(params, session), replication_info_(replication_info) {}
 
-  std::optional<std::string> operator()();
+  std::optional<std::string> inner_handle() override;
 
 private:
-  const std::vector<std::string>::iterator begin;
-  const std::vector<std::string>::iterator end;
   const std::shared_ptr<const ReplicationInfo> replication_info_;
 };
 } // namespace commands
