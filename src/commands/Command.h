@@ -4,6 +4,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <vector>
 
 class Session;
 namespace commands {
@@ -13,12 +14,12 @@ public:
 
   virtual ~Command() = default;
 
-  void handle(std::string raw_command, Session* session);
+  void handle(const std::vector<std::string>& command_list, Session* session);
 
 protected:
-  virtual std::optional<std::string> inner_handle(const std::span<std::string>& params, Session* session) = 0;
+  virtual std::optional<std::string> inner_handle(const std::span<const std::string>& params, Session* session) = 0;
 
-  virtual void after_write(const std::span<std::string>& params, Session* session) {
+  virtual void after_write(const std::span<const std::string>& params, Session* session) {
     return;
   }
 

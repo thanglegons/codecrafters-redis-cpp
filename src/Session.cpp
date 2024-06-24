@@ -30,6 +30,8 @@ void Session::handle_read(const asio::error_code &error_code, size_t len) {
     // process the received message
     std::string message(data_, len);
 
+    std::cout << "Debug: receive message = " << message << "\n";
+
     command_handler_.handle_raw_command(message);
 
   } else if (error_code == asio::error::eof) {

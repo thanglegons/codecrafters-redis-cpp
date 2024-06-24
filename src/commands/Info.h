@@ -9,7 +9,7 @@ struct Info : public Command {
 
   ~Info() = default;
 
-  std::optional<std::string> inner_handle(const std::span<std::string>& params, Session* session) override;
+  std::optional<std::string> inner_handle(const std::span<const std::string>& params, Session* session) override;
 
 private:
   const std::shared_ptr<const ReplicationInfo> replication_info_;

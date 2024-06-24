@@ -5,7 +5,7 @@
 
 class Parser {
 public:
-    static std::vector<std::string> decode(const std::string& command);
+    static std::vector<std::vector<std::string>> decode(const std::string& command);
 
     static std::string encodeString(const std::string& str);
 

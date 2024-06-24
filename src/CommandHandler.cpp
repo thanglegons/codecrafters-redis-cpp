@@ -14,40 +14,42 @@
 
 CommandHandler::CommandHandler(
     std::shared_ptr<KVStorage> data,
-    std::shared_ptr<ReplicationInfo> replication_info,
-    Session* session)
+    std::shared_ptr<ReplicationInfo> replication_info, Session *session)
     : data_(std::move(data)), replication_info_(std::move(replication_info)),
       session_(session) {}
 
 void CommandHandler::handle_raw_command(const std::string &raw_command) {
   auto commands = Parser::decode(raw_command);
-  std::string main_command = commands[0];
-  std::transform(main_command.begin(), main_command.end(), main_command.begin(),
-                 [](const auto c) { return tolower(c); });
+  for (const auto &command_list : commands) {
+    std::string main_command = command_list[0];
+    std::transform(main_command.begin(), main_command.end(),
+                   main_command.begin(),
+                   [](const auto c) { return tolower(c); });
 
-  auto command = [&]() -> std::unique_ptr<commands::Command> {
-    if (main_command == "ping") {
-      return std::make_unique<commands::Ping>();
-    } else if (main_command == "echo") {
-      return std::make_unique<commands::Echo>();
-    } else if (main_command == "set") {
-      return std::make_unique<commands::Set>(data_);
-    } else if (main_command == "get") {
-      return std::make_unique<commands::Get>(data_);
-    } else if (main_command == "info") {
-      return std::make_unique<commands::Info>(replication_info_);
-    } else if (main_command == "replconf") {
-      return std::make_unique<commands::Replconf>();
-    } else if (main_command == "psync") {
-      return std::make_unique<commands::Psync>(replication_info_);
+    auto command = [&]() -> std::unique_ptr<commands::Command> {
+      if (main_command == "ping") {
+        return std::make_unique<commands::Ping>();
+      } else if (main_command == "echo") {
+        return std::make_unique<commands::Echo>();
+      } else if (main_command == "set") {
+        return std::make_unique<commands::Set>(data_);
+      } else if (main_command == "get") {
+        return std::make_unique<commands::Get>(data_);
+      } else if (main_command == "info") {
+        return std::make_unique<commands::Info>(replication_info_);
+      } else if (main_command == "replconf") {
+        return std::make_unique<commands::Replconf>();
+      } else if (main_command == "psync") {
+        return std::make_unique<commands::Psync>(replication_info_);
+      }
+      return nullptr;
+    }();
+
+    if (command == nullptr) {
+      std::cout << "Incorrect command, command = " << main_command << "\n";
+      return;
     }
-    return nullptr;
-  }();
 
-  if (command == nullptr) {
-    std::cout << "Incorrect command, command = " << main_command << "\n";
-    return;
+    command->handle(command_list, session_);
   }
-
-  command->handle(raw_command, session_);
 }

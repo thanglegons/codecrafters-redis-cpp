@@ -3,7 +3,7 @@
 
 namespace commands {
 
-std::optional<std::string> Info::inner_handle(const std::span<std::string>& params, Session* session) {
+std::optional<std::string> Info::inner_handle(const std::span<const std::string>& params, Session* session) {
   int num_params = params.size();
   if (num_params != 1) {
     return std::nullopt;

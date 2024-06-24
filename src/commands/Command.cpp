@@ -4,13 +4,9 @@
 #include <iostream>
 
 namespace commands {
-void Command::handle(std::string raw_command,
+void Command::handle(const std::vector<std::string>& command_list,
                      Session* session) {
-  auto commands = Parser::decode(raw_command);
-  std::string main_command = commands[0];
-  std::transform(main_command.begin(), main_command.end(), main_command.begin(),
-                 [](const auto c) { return tolower(c); });
-  std::span<std::string> params{commands.begin() + 1, commands.end()};
+  std::span<const std::string> params{command_list.begin() + 1, command_list.end()};
 
   std::optional<std::string> return_message = inner_handle(params, session);
 
@@ -21,6 +17,8 @@ void Command::handle(std::string raw_command,
     } else {
       session->write(kErrorReturn, default_call_back);
     }
+  } else {
+    session->start();
   }
 
   after_write(params, session);
@@ -31,6 +29,7 @@ void Command::handle(std::string raw_command,
       if (replica->is_session_closed()) {
         continue;
       }
+      auto raw_command = Parser::encodeRespArray(command_list);
       replica->write(
           raw_command, [](const asio::error_code &error_code, size_t len) {
             if (error_code) {

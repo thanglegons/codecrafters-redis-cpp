@@ -3,7 +3,7 @@
 
 namespace commands {
 std::optional<std::string>
-Ping::inner_handle(const std::span<std::string> &params,
+Ping::inner_handle(const std::span<const std::string> &params,
                    Session* session) {
   return Parser::encodeString("PONG");
 }

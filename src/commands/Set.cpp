@@ -4,7 +4,7 @@
 namespace commands {
 
 std::optional<std::string>
-Set::inner_handle(const std::span<std::string> &params,
+Set::inner_handle(const std::span<const std::string> &params,
                   Session* session) {
   int num_params = params.size();
   if (num_params < 2) {

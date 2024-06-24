@@ -5,13 +5,13 @@
 namespace commands {
 
 std::optional<std::string>
-Psync::inner_handle(const std::span<std::string> &params, Session *session) {
+Psync::inner_handle(const std::span<const std::string> &params, Session *session) {
   std::string response = "FULLRESYNC " + rep_info_->master_replid + " 0";
   response = Parser::encodeString(response);
   return response;
 }
 
-void Psync::after_write(const std::span<std::string> &params,
+void Psync::after_write(const std::span<const std::string> &params,
                         Session *session) {
   std::string rdb =
       "\x52\x45\x44\x49\x53\x30\x30\x31\x31\xfa\x09\x72\x65\x64\x69\x73\x2d\x76"

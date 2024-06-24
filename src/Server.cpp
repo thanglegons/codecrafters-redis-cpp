@@ -9,8 +9,8 @@
 #include <asio/read.hpp>
 #include <asio/read_until.hpp>
 #include <asio/registered_buffer.hpp>
-#include <asio/write.hpp>
 #include <asio/streambuf.hpp>
+#include <asio/write.hpp>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -90,10 +90,15 @@ bool Server::master_handshake(const ServerConfig &config) {
       {
         asio::streambuf resp_buffer;
         asio::read_until(socket, resp_buffer, "\r\n");
+        std::istream response_stream(&resp_buffer);
+        std::string response;
+        std::getline(response_stream, response);
+
+        std::cout << "Received: " << response << std::endl;
       }
       if (command[0] == "PSYNC") {
-        char reply[1024];
-        socket.read_some(asio::buffer(reply));
+        asio::streambuf resp_buffer;
+        asio::read(socket, resp_buffer, asio::transfer_at_least(1));
       }
     }
   } else {

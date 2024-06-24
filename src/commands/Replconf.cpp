@@ -5,7 +5,7 @@
 namespace commands {
 
 std::optional<std::string>
-Replconf::inner_handle(const std::span<std::string> &params,
+Replconf::inner_handle(const std::span<const std::string> &params,
                        Session* session) {
   if (params[0] == "listening-port") {
     session->set_as_replica();

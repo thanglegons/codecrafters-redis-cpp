@@ -9,7 +9,7 @@ struct Set : public Command {
 
   ~Set() = default;
 
-  std::optional<std::string> inner_handle(const std::span<std::string> &params,
+  std::optional<std::string> inner_handle(const std::span<const std::string> &params,
                                           Session* session);
 
 private:
