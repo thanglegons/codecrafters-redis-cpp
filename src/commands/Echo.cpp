@@ -3,12 +3,12 @@
 
 namespace commands {
 
-std::optional<std::string> Echo::inner_handle() {
-  int num_params = params_.size();
+std::optional<std::string> Echo::inner_handle(const std::span<std::string>& params, Session* session) {
+  int num_params = params.size();
   if (num_params != 1) {
     return std::nullopt;
   }
-  auto parsed_message = Parser::encodeString(params_[0]);
+  auto parsed_message = Parser::encodeString(params[0]);
   return parsed_message;
 }
 

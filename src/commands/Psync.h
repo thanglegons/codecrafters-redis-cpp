@@ -6,11 +6,16 @@
 
 namespace commands {
 struct Psync : public Command {
-  Psync(const std::span<std::string> &params, Session *session,
-        std::shared_ptr<ReplicationInfo> rep_info)
-      : Command(params, session), rep_info_(rep_info) {}
+  Psync(std::shared_ptr<ReplicationInfo> rep_info)
+      : Command(false), rep_info_(rep_info) {}
 
-  std::optional<std::string> inner_handle() override;
+  ~Psync() = default;
+
+  std::optional<std::string> inner_handle(const std::span<std::string> &params,
+                                          Session *session) override;
+
+  void after_write(const std::span<std::string> &params,
+                   Session *session) override;
 
 private:
   std::shared_ptr<ReplicationInfo> rep_info_;

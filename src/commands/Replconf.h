@@ -4,9 +4,12 @@
 
 namespace commands {
 struct Replconf : public Command {
-  Replconf(const std::span<std::string> &params, Session *session)
-      : Command(params, session) {}
+  Replconf() : Command(false) {}
 
-  std::optional<std::string> inner_handle() override;
+  ~Replconf() = default;
+
+  std::optional<std::string>
+  inner_handle(const std::span<std::string> &params,
+               Session* session) override;
 };
 } // namespace commands

@@ -3,18 +3,20 @@
 
 namespace commands {
 
-std::optional<std::string> Set::inner_handle() {
-  int num_params = params_.size();
+std::optional<std::string>
+Set::inner_handle(const std::span<std::string> &params,
+                  Session* session) {
+  int num_params = params.size();
   if (num_params < 2) {
     return std::nullopt;
   }
-  auto key = params_[0];
-  auto value = params_[1];
+  auto key = params[0];
+  auto value = params[1];
   if (num_params == 2) {
     data_->set(std::move(key), std::move(value));
     return Parser::encodeString("OK");
-  } else if (num_params == 4 && params_[2] == "px") {
-    auto expiring_time = std::stoi(params_[3]);
+  } else if (num_params == 4 && params[2] == "px") {
+    auto expiring_time = std::stoi(params[3]);
     data_->set(std::move(key), std::move(value), expiring_time);
     return Parser::encodeString("OK");
   }

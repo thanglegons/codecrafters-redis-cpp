@@ -4,9 +4,10 @@
 
 namespace commands {
 struct Echo : public Command {
-  Echo(const std::span<std::string> &params, Session *session)
-      : Command(params, session) {}
+  Echo() : Command(true) {}
 
-  std::optional<std::string> inner_handle() override;
+  ~Echo() = default;
+
+  std::optional<std::string> inner_handle(const std::span<std::string>& params, Session* session) override;
 };
 } // namespace commands

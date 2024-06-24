@@ -5,11 +5,12 @@
 
 namespace commands {
 struct Set : public Command {
-  Set(const std::span<std::string> &params, Session *session,
-      const std::shared_ptr<KVStorage> data)
-      : Command(params, session), data_(data) {}
+  Set(const std::shared_ptr<KVStorage> data) : Command(true), data_(data) {}
 
-  std::optional<std::string> inner_handle();
+  ~Set() = default;
+
+  std::optional<std::string> inner_handle(const std::span<std::string> &params,
+                                          Session* session);
 
 private:
   const std::shared_ptr<KVStorage> data_;
