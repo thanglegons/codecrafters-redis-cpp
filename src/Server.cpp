@@ -7,8 +7,10 @@
 #include <asio/error_code.hpp>
 #include <asio/io_context.hpp>
 #include <asio/read.hpp>
+#include <asio/read_until.hpp>
 #include <asio/registered_buffer.hpp>
 #include <asio/write.hpp>
+#include <asio/streambuf.hpp>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -86,8 +88,8 @@ bool Server::master_handshake(const ServerConfig &config) {
         return false;
       }
       {
-        char reply[1024];
-        socket.read_some(asio::buffer(reply));
+        asio::streambuf resp_buffer;
+        asio::read_until(socket, resp_buffer, "\r\n");
       }
       if (command[0] == "PSYNC") {
         char reply[1024];
