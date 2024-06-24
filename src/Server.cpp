@@ -96,10 +96,15 @@ bool Server::master_handshake(const ServerConfig &config) {
 
         std::cout << "Received: " << response << std::endl;
       }
-      if (command[0] == "PSYNC") {
-        asio::streambuf resp_buffer;
-        asio::read(socket, resp_buffer, asio::transfer_at_least(1));
-      }
+      // if (command[0] == "PSYNC") {
+      //   asio::streambuf resp_buffer;
+      //   asio::read(socket, resp_buffer, asio::transfer_at_least(1));
+      //   std::istream response_stream(&resp_buffer);
+      //   std::string response;
+      //   std::getline(response_stream, response);
+
+      //   std::cout << "Received: " << response << std::endl;
+      // }
     }
   } else {
     std::cout << "Failed to connect to master server\n";
