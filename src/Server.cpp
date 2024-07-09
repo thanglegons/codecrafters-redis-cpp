@@ -92,6 +92,7 @@ bool Server::master_handshake(const ServerConfig &config)
         {"REPLCONF", "listening-port", std::to_string(config.port)},
         {"REPLCONF", "capa", "sync2"},
         {"PSYNC", "?", "-1"}};
+    asio::streambuf resp_buffer;
     for (const auto &command : commands)
     {
       std::string message = Parser::encodeRespArray(command);
@@ -103,7 +104,6 @@ bool Server::master_handshake(const ServerConfig &config)
                   << command_ec.message() << "\n";
         return false;
       }
-      asio::streambuf resp_buffer;
       int bytes = asio::read_until(socket, resp_buffer, "\r\n");
       std::istream response_stream(&resp_buffer);
       std::string response{
@@ -111,37 +111,30 @@ bool Server::master_handshake(const ServerConfig &config)
           asio::buffers_begin(resp_buffer.data()) + bytes - 2};
       resp_buffer.consume(bytes);
       std::cout << "Received: " << response << std::endl;
-      if (command[0] == "PSYNC")
-      {
-        int num_bytes = 0;
-        int bytes = asio::read_until(socket, resp_buffer, "\r\n");
-        std::istream response_stream(&resp_buffer);
-        std::string response{
-            asio::buffers_begin(resp_buffer.data()),
-            asio::buffers_begin(resp_buffer.data()) + bytes - 2};
-        resp_buffer.consume(bytes);
-        assert(response[0] == '$');
-        std::cout << response.size() << "\n";
-        for (int i = 1; i < response.size(); i++)
-        {
-          num_bytes = num_bytes * 10 + (response[i] - '0');
-        }
-        std::cout << "Num bytes = " << num_bytes << "\n";
-        std::cout << resp_buffer.size() << "\n";
-        if (resp_buffer.size() > bytes)
-        {
-          std::string rdb_content = {
-              asio::buffers_begin(resp_buffer.data()),
-              asio::buffers_begin(resp_buffer.data()) + num_bytes};
-          resp_buffer.consume(num_bytes);
-          std::string command{asio::buffers_begin(resp_buffer.data()),
-                              asio::buffers_end(resp_buffer.data())};
-          std::cout << "Command = " << command << "\n";
-          master_session_ = std::make_shared<Session>(std::move(socket), this, true);
-          master_session_->start();
-          master_session_->handle_message(command);
-        }
-      }
+    }
+    int num_bytes = 0;
+    int bytes = asio::read_until(socket, resp_buffer, "\r\n");
+    std::istream response_stream(&resp_buffer);
+    std::string response{
+        asio::buffers_begin(resp_buffer.data()),
+        asio::buffers_begin(resp_buffer.data()) + bytes - 2};
+    resp_buffer.consume(bytes);
+    assert(response[0] == '$');
+    for (int i = 1; i < response.size(); i++)
+    {
+      num_bytes = num_bytes * 10 + (response[i] - '0');
+    }
+    if (resp_buffer.size() > bytes)
+    {
+      std::string rdb_content = {
+          asio::buffers_begin(resp_buffer.data()),
+          asio::buffers_begin(resp_buffer.data()) + num_bytes};
+      resp_buffer.consume(num_bytes);
+      std::string command{asio::buffers_begin(resp_buffer.data()),
+                          asio::buffers_end(resp_buffer.data())};
+      master_session_ = std::make_shared<Session>(std::move(socket), this, true);
+      master_session_->start();
+      master_session_->handle_message(command);
     }
   }
   else
