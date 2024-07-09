@@ -4,7 +4,7 @@
 
 namespace commands {
 struct Ping : public Command {
-  Ping() : Command(false) {}
+  Ping() : Command(true) {}
 
   ~Ping() = default;
 

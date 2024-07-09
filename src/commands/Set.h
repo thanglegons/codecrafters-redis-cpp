@@ -5,7 +5,7 @@
 
 namespace commands {
 struct Set : public Command {
-  Set(const std::shared_ptr<KVStorage> data) : Command(true), data_(data) {}
+  Set(const std::shared_ptr<KVStorage> data) : Command(true, true), data_(data) {}
 
   ~Set() = default;
 
