@@ -16,55 +16,76 @@ Session::Session(tcp::socket &&socket, Server *server, bool is_master)
 
 tcp::socket &Session::get_socket() { return socket_; }
 
-void Session::start() {
+void Session::start()
+{
   auto shared_self = shared_from_this();
   socket_.async_read_some(
       asio::buffer(data_),
-      [this, shared_self](const asio::error_code &error_code, size_t len) {
+      [this, shared_self](const asio::error_code &error_code, size_t len)
+      {
         handle_read(error_code, len);
       });
 }
 
-void Session::handle_read(const asio::error_code &error_code, size_t len) {
-  if (!error_code) {
+void Session::handle_read(const asio::error_code &error_code, size_t len)
+{
+  if (!error_code)
+  {
     // process the received message
     std::string message(data_, len);
 
-    std::cout << "Debug: receive message = " << message << "\n";
-
-    command_handler_.handle_raw_command(message);
-
-  } else if (error_code == asio::error::eof) {
+    handle_message(message);
+  }
+  else if (error_code == asio::error::eof)
+  {
     is_closed = true;
     std::cout << "Connection closed by peer\n";
-  } else if (error_code == asio::error::operation_aborted) {
+  }
+  else if (error_code == asio::error::operation_aborted)
+  {
     is_closed = true;
     std::cout << "Operation aborted\n";
-  } else {
+  }
+  else
+  {
     is_closed = true;
     std::cout << "Error: " << error_code.message() << "\n";
   }
 }
 
-void Session::handle_write(const asio::error_code &error_code, size_t len) {
-  if (!error_code) {
+void Session::handle_write(const asio::error_code &error_code, size_t len)
+{
+  if (!error_code)
+  {
     start();
-  } else {
+  }
+  else
+  {
     std::cout << "Read failed, error = " << error_code.message() << "\n";
   }
 }
 
-void Session::set_as_replica() {
+void Session::set_as_replica()
+{
   is_replica_session_ = true;
   replicas_->add_replica(shared_from_this());
 }
 
 bool Session::is_master_session() const { return is_master_session_; }
 
-std::vector<std::shared_ptr<Session>> Session::get_replicas() const {
+std::vector<std::shared_ptr<Session>> Session::get_replicas() const
+{
   return replicas_->get_replicas();
 }
 
-bool Session::is_session_closed() const {
+bool Session::is_session_closed() const
+{
   return is_closed;
+}
+
+void Session::handle_message(const std::string message)
+{
+  std::cout << "Debug: receive message = " << message << "\n";
+
+  command_handler_.handle_raw_command(message);
 }

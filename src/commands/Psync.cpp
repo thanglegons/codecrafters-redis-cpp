@@ -21,5 +21,7 @@ void Psync::after_write(const std::span<const std::string> &params,
       "\x2d\x62\x61\x73\x65\xc0\x00\xff\xf0\x6e\x3b\xfe\xc0\xff\x5a\xa2";
   std::string rdb_return = "$" + std::to_string(rdb.size()) + "\r\n" + rdb;
   session->write(rdb_return, default_call_back);
+  // session->write(Parser::encodeRespArray(std::vector<std::string>{"REPLCONF", "GETACK", "*"}), default_call_back);
+  session->set_as_replica();
 }
 } // namespace commands

@@ -9,8 +9,7 @@ void Command::handle(const std::vector<std::string>& command_list,
   std::span<const std::string> params{command_list.begin() + 1, command_list.end()};
 
   std::optional<std::string> return_message = inner_handle(params, session);
-
-  if (!session->is_master_session()) {
+  if (!is_write_command || !session->is_master_session()) {
     // don't write back if it's from master
     if (return_message.has_value()) {
       session->write(return_message.value(), default_call_back);

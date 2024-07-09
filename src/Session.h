@@ -43,6 +43,8 @@ public:
 
   bool is_session_closed() const;
 
+  void handle_message(const std::string message);
+
 private:
   void handle_read(const asio::error_code &error_code, size_t len);
 
