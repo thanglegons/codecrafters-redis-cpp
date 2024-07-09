@@ -8,11 +8,12 @@
 #include "commands/Psync.h"
 #include "commands/Replconf.h"
 #include "commands/Set.h"
+#include "commands/Wait.h"
 #include "Session.h"
+#include "ReplicationInfo.h"
 #include <algorithm>
 #include <iostream>
 #include <memory>
-#include "ReplicationInfo.h"
 
 CommandHandler::CommandHandler(
     std::shared_ptr<KVStorage> data,
@@ -60,6 +61,10 @@ void CommandHandler::handle_raw_command(const std::string &raw_command)
       else if (main_command == "psync")
       {
         return std::make_unique<commands::Psync>(replication_info_);
+      }
+      else if (main_command == "wait")
+      {
+        return std::make_unique<commands::Wait>();
       }
       return nullptr;
     }();
