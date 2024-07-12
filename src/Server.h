@@ -22,7 +22,7 @@ struct ServerConfig {
   std::optional<ReplicaOf> replicaof;
 };
 
-struct Replicas {
+struct ReplicaManager {
 public:
   void add_replica(std::shared_ptr<Session> replica) {
     std::unique_lock<std::shared_mutex> l(mtx);
@@ -60,6 +60,6 @@ private:
   asio::io_context &io_context;
   std::shared_ptr<KVStorage> data_;
   std::shared_ptr<ReplicationInfo> replication_info_;
-  std::shared_ptr<Replicas> replica_sessions_;
+  std::shared_ptr<ReplicaManager> replica_sessions_;
   std::shared_ptr<Session> master_session_;
 };

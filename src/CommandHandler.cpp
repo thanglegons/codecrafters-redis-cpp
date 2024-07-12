@@ -1,6 +1,9 @@
 #include "CommandHandler.h"
 #include "Parser.h"
+#include "ReplicationInfo.h"
+#include "Session.h"
 #include "Storage.h"
+#include "commands/Command.h"
 #include "commands/Echo.h"
 #include "commands/Get.h"
 #include "commands/Info.h"
@@ -9,8 +12,6 @@
 #include "commands/Replconf.h"
 #include "commands/Set.h"
 #include "commands/Wait.h"
-#include "Session.h"
-#include "ReplicationInfo.h"
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -19,77 +20,42 @@ CommandHandler::CommandHandler(
     std::shared_ptr<KVStorage> data,
     std::shared_ptr<ReplicationInfo> replication_info, Session *session)
     : data_(std::move(data)), replication_info_(std::move(replication_info)),
-      session_(session) {}
+      session_(session) {
+  command_map_.emplace("ping", std::make_unique<commands::Ping>());
+  command_map_.emplace("echo", std::make_unique<commands::Echo>());
+  command_map_.emplace("set", std::make_unique<commands::Set>(data_));
+  command_map_.emplace("get", std::make_unique<commands::Get>(data_));
+  command_map_.emplace("info",
+                       std::make_unique<commands::Info>(replication_info_));
+  command_map_.emplace("replconf",
+                       std::make_unique<commands::Replconf>(replication_info_));
+  command_map_.emplace("psync",
+                       std::make_unique<commands::Psync>(replication_info_));
+  command_map_.emplace("wait", std::make_unique<commands::Wait>());
+}
 
-void CommandHandler::handle_raw_command(const std::string &raw_command)
-{
+void CommandHandler::handle_raw_command(const std::string &raw_command) {
   auto commands = Parser::decode(raw_command);
-  for (const auto &command_list : commands)
-  {
+  for (const auto &command_list : commands) {
     std::string main_command = command_list[0];
     std::transform(main_command.begin(), main_command.end(),
                    main_command.begin(),
-                   [](const auto c)
-                   { return tolower(c); });
+                   [](const auto c) { return tolower(c); });
 
-    auto command = [&]() -> std::unique_ptr<commands::Command>
-    {
-      if (main_command == "ping")
-      {
-        return std::make_unique<commands::Ping>();
-      }
-      else if (main_command == "echo")
-      {
-        return std::make_unique<commands::Echo>();
-      }
-      else if (main_command == "set")
-      {
-        return std::make_unique<commands::Set>(data_);
-      }
-      else if (main_command == "get")
-      {
-        return std::make_unique<commands::Get>(data_);
-      }
-      else if (main_command == "info")
-      {
-        return std::make_unique<commands::Info>(replication_info_);
-      }
-      else if (main_command == "replconf")
-      {
-        return std::make_unique<commands::Replconf>(replication_info_);
-      }
-      else if (main_command == "psync")
-      {
-        return std::make_unique<commands::Psync>(replication_info_);
-      }
-      else if (main_command == "wait")
-      {
-        return std::make_unique<commands::Wait>();
-      }
-      return nullptr;
-    }();
+    auto it = command_map_.find(main_command);
 
-    if (command == nullptr)
-    {
+    if (it == command_map_.end()) {
       std::cout << "Incorrect command, command = " << main_command << "\n";
       return;
     }
 
-    auto callback = [this, offset = Parser::encodeRespArray(command_list).size()](const asio::error_code &ec, size_t len)
-    {
-      if (ec)
-      {
-        std::cout << "Failed to write message, error = " << ec.message() << "\n";
-      }
-      else
-      {
-        if (session_->is_master_session())
-        {
-          replication_info_->updateOffset(offset);
-        }
-      }
-    };
+    std::cout << "Can go here\n";
+    auto command = it->second.get();
+    command->handle(command_list, session_);
 
-    command->handle(command_list, session_, callback);
+    if (session_->is_master_session()) {
+      replication_info_->updateOffset(
+          Parser::encodeRespArray(command_list).size());
+    }
   }
 }

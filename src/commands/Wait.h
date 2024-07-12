@@ -1,20 +1,28 @@
 #include "Command.h"
 #include "Storage.h"
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
+#include <asio/steady_timer.hpp>
 
-namespace commands
-{
-    struct Wait : public Command
-    {
-        Wait()
-            : Command(false) {}
+namespace commands {
+struct Wait : public Command {
+  Wait() : Command(false) {}
 
-        ~Wait() = default;
+  ~Wait() { std::cout << "Destructed wait"; }
 
-        std::optional<std::string>
-        inner_handle(const std::span<const std::string> &params,
-                     Session *session) override;
-    };
+  void handle(const std::vector<std::string> &command_list,
+              Session *session) override;
+
+  std::optional<std::string>
+  inner_handle(const std::span<const std::string> &params,
+               Session *session) override;
+
+  void handle_wait(Session *replica_session, std::shared_ptr<int> needed,
+                   std::shared_ptr<int> acks, int64_t deadline,
+                   Session *client_session,
+                   std::shared_ptr<asio::steady_timer> timer,
+                   std::vector<std::shared_ptr<asio::steady_timer>> timers);
+};
 } // namespace commands

@@ -1,6 +1,7 @@
 #pragma once
 #include "ReplicationInfo.h"
 #include "Storage.h"
+#include "commands/Command.h"
 #include <memory>
 
 // forward declaration
@@ -16,5 +17,7 @@ private:
   std::shared_ptr<KVStorage> data_;
   std::shared_ptr<ReplicationInfo> replication_info_;
   Session* session_;
+
+  std::unordered_map<std::string, std::unique_ptr<commands::Command>> command_map_;
 
 };
