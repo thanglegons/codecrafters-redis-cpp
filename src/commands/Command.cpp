@@ -1,8 +1,7 @@
 #include "Command.h"
 #include "Parser.h"
-#include "Replica.hpp"
 #include "Session.h"
-#include <asio/write.hpp>
+#include "Replica.hpp"
 #include <iostream>
 
 namespace commands {
@@ -57,15 +56,13 @@ void Command::propagate(const std::vector<std::string> &command_list,
         continue;
       }
       auto raw_command = Parser::encodeRespArray(command_list);
-      asio::async_write(replica_session->get_socket(),
-                        asio::buffer(raw_command),
-                        [](const asio::error_code &error_code, size_t len) {
-                          if (error_code) {
-                            std::cout
-                                << "Failed to propagate to replicas, error = "
-                                << error_code.message() << std::endl;
-                          }
-                        });
+      replica_session->write(
+          raw_command, [](const asio::error_code &error_code, size_t len) {
+            if (error_code) {
+              std::cout << "Failed to propagate to replicas, error = "
+                        << error_code.message() << std::endl;
+            }
+          });
       replica->add_expected_offset(raw_command.size());
     }
   }
