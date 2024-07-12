@@ -16,7 +16,7 @@
 
 Session::Session(asio::io_context &io_context, Server *server, bool is_master)
     : io_context_(io_context), socket_(io_context),
-      command_handler_(server->data_, server->replication_info_, this),
+      command_handler_(server->data_, server->replication_info_, server->server_config_, this),
       is_master_session_(is_master), replicas_(server->replica_manager_) {}
 
 tcp::socket &Session::get_socket() { return socket_; }

@@ -5,17 +5,23 @@
 
 struct Argument {
   int16_t port{kDefaultPort};
-  
+
   std::optional<std::string> replicaof_host;
   std::optional<int16_t> replicaof_port;
 
   static constexpr int16_t kDefaultPort = 6379;
+
+  std::optional<std::string> dir;
+  std::optional<std::string> dbfilename;
 
   ServerConfig to_server_config() {
     ServerConfig config;
     config.port = port;
     if (replicaof_port.has_value()) {
       config.replicaof = {replicaof_host.value(), replicaof_port.value()};
+    }
+    if (dir.has_value() && dbfilename.has_value()) {
+      config.rdb_info = {dir.value(), dbfilename.value()};
     }
     return config;
   }
@@ -50,7 +56,17 @@ Argument read_argument(int argc, char **argv) {
     argument.replicaof_host = std::move(host);
     argument.replicaof_port = port;
   }
-  
+
+  // Check if rdb info dir argument was provided
+  if (auto it = args.find("dir"); it != args.end()) {
+    argument.dir = it->second;
+  }
+
+  // Check if rdb info dbfilename argument was provided
+  if (auto it = args.find("dbfilename"); it != args.end()) {
+    argument.dbfilename = it->second;
+  }
+
   return argument;
 }
 

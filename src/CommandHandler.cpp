@@ -4,6 +4,7 @@
 #include "Session.h"
 #include "Storage.h"
 #include "commands/Command.h"
+#include "commands/Config.hpp"
 #include "commands/Echo.h"
 #include "commands/Get.h"
 #include "commands/Info.h"
@@ -18,9 +19,10 @@
 
 CommandHandler::CommandHandler(
     std::shared_ptr<KVStorage> data,
-    std::shared_ptr<ReplicationInfo> replication_info, Session *session)
+    std::shared_ptr<ReplicationInfo> replication_info,
+    std::shared_ptr<ServerConfig> server_config, Session *session)
     : data_(std::move(data)), replication_info_(std::move(replication_info)),
-      session_(session) {
+      server_config_(std::move(server_config)), session_(session) {
   command_map_.emplace("ping", std::make_unique<commands::Ping>());
   command_map_.emplace("echo", std::make_unique<commands::Echo>());
   command_map_.emplace("set", std::make_unique<commands::Set>(data_));
@@ -32,6 +34,7 @@ CommandHandler::CommandHandler(
   command_map_.emplace("psync",
                        std::make_unique<commands::Psync>(replication_info_));
   command_map_.emplace("wait", std::make_unique<commands::Wait>());
+  command_map_.emplace("config", std::make_unique<commands::Config>(server_config_));
 }
 
 void CommandHandler::handle_raw_command(const std::string &raw_command) {

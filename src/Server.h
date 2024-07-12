@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ReplicationInfo.h"
+#include "ServerConfig.hpp"
 #include "Storage.h"
 #include <asio/error_code.hpp>
 #include <asio/io_context.hpp>
@@ -13,17 +14,6 @@ using asio::ip::tcp;
 class Session;
 class Replica;
 class ReplicaManager;
-
-struct ServerConfig {
-  int16_t port;
-
-  struct ReplicaOf {
-    std::string host;
-    int16_t port;
-  };
-  std::optional<ReplicaOf> replicaof;
-};
-
 
 class Server {
   friend class Session;
@@ -48,4 +38,5 @@ private:
   std::shared_ptr<ReplicationInfo> replication_info_;
   std::shared_ptr<ReplicaManager> replica_manager_;
   std::shared_ptr<Session> master_session_;
+  std::shared_ptr<ServerConfig> server_config_;
 };
