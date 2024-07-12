@@ -21,7 +21,6 @@ Config::inner_handle(const std::span<const std::string> &params,
       if (!rdb_info.has_value()) {
         return std::nullopt;
       }
-      std::cout << "Should be here";
       return Parser::encodeRespArray({"dir", rdb_info->dir});
     } else if (request_key == "dbfilename") {
       auto &rdb_info = server_config_->rdb_info;

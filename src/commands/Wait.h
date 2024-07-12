@@ -12,7 +12,7 @@ namespace commands {
 struct Wait : public Command {
   Wait() : Command(false) {}
 
-  ~Wait() { std::cout << "Destructed wait"; }
+  ~Wait() = default;
 
   void handle(const std::vector<std::string> &command_list,
               Session *session) override;

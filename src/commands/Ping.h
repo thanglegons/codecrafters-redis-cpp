@@ -7,9 +7,7 @@ namespace commands {
 struct Ping : public Command {
   Ping() : Command(true) {}
 
-  ~Ping() {
-    std::cout << "Destructed ping\n";
-  }
+  ~Ping() = default;
 
   std::optional<std::string>
   inner_handle(const std::span<const std::string> &params,
