@@ -1,6 +1,7 @@
 #include "Wait.h"
 #include "Helpers.h"
 #include "Parser.h"
+#include "Replica.hpp"
 #include "Session.h"
 #include <asio/basic_stream_socket.hpp>
 #include <asio/buffer.hpp>
@@ -18,27 +19,28 @@
 namespace commands {
 
 void Wait::handle_wait(
-    Session *replica_session, std::shared_ptr<int> needed,
+    std::shared_ptr<Replica> replica, std::shared_ptr<int> needed,
     std::shared_ptr<int> acks, int64_t deadline, Session *client_session,
     std::shared_ptr<asio::steady_timer> timer,
     std::vector<std::shared_ptr<asio::steady_timer>> timers) {
+  auto replica_session = replica->get_session();
   auto &socket = replica_session->get_socket();
   static const std::string command =
       Parser::encodeRespArray({"REPLCONF", "GETACK", "*"});
   socket.cancel();
   asio::async_write(
       socket, asio::buffer(command),
-      [this, replica_session, needed, deadline,
+      [this, replica, replica_session, needed, deadline,
        client_session = client_session->shared_from_this(), timer, timers,
        acks](const asio::error_code &ec, size_t len) {
         auto &socket = replica_session->get_socket();
-        int expected_offset = replica_session->get_expected_offset();
-        replica_session->add_expected_offset(command.size());
+        int expected_offset = replica->get_expected_offset();
+        replica->add_expected_offset(command.size());
         std::cout << "Wait command: waiting for read\n";
         auto buffer = std::make_shared<std::array<char, 2014>>();
         socket.async_read_some(
             asio::buffer(*buffer),
-            [this, replica_session, buffer, needed, expected_offset, deadline,
+            [this, replica, buffer, needed, expected_offset, deadline,
              client_session, acks, timer,
              timers](const asio::error_code &ec, size_t len) {
               if (ec) {
@@ -46,17 +48,13 @@ void Wait::handle_wait(
                 (*needed)--;
               } else {
                 std::string response(buffer->begin(), buffer->begin() + len);
-                std::cout << "Wait command: read callback, response = "
-                          << response << ", len = " << len << "\n";
                 auto parsed = Parser::decode(response);
                 auto offset = std::stoi(parsed[0].back());
-                std::cout << expected_offset << " " << offset << " "
-                          << (*needed) << "\n";
                 if (offset >= expected_offset) {
                   (*needed)--;
                   (*acks)++;
                 } else {
-                  handle_wait(replica_session, needed, acks, deadline,
+                  handle_wait(replica, needed, acks, deadline,
                               client_session.get(), timer, timers);
                   return;
                 }
@@ -67,9 +65,6 @@ void Wait::handle_wait(
                   r_timer->cancel();
                 }
                 std::string response = ":" + std::to_string(*acks) + "\r\n";
-                std::cout << response << ", deadline = " << deadline
-                          << ", current = " << get_current_timestamp_ms()
-                          << "\n";
                 write(std::move(response), client_session.get());
               }
               timer->cancel();
@@ -103,7 +98,7 @@ Wait::inner_handle(const std::span<const std::string> &params,
 
     int avail_replicas = 0;
     for (const auto &replica : replicas) {
-      avail_replicas += !replica->is_session_closed();
+      avail_replicas += !replica->get_session()->is_session_closed();
     }
 
     auto needed = std::make_shared<int>(std::min(min_replicas, avail_replicas));
@@ -111,19 +106,19 @@ Wait::inner_handle(const std::span<const std::string> &params,
 
     std::vector<std::shared_ptr<asio::steady_timer>> timers;
     for (auto &replica : replicas) {
-      if (replica->is_session_closed()) {
+      auto replica_session = replica->get_session();
+      if (replica_session->is_session_closed()) {
         continue;
       }
       if (replica->get_expected_offset() == 0) {
         (*acks)++;
         continue;
       }
-      auto timer =
-          std::make_shared<asio::steady_timer>(replica->get_io_context());
+      auto timer = std::make_shared<asio::steady_timer>(
+          replica_session->get_io_context());
       timer->expires_after(std::chrono::milliseconds(timeout_ms));
-      timer->async_wait([replica](const asio::error_code &ec) {
-        std::cout << "Timed out, ts = " << get_current_timestamp_ms() << "\n";
-        auto &socket = replica->get_socket();
+      timer->async_wait([replica_session](const asio::error_code &ec) {
+        auto &socket = replica_session->get_socket();
         socket.cancel();
       });
       timers.emplace_back(std::move(timer));
@@ -133,12 +128,13 @@ Wait::inner_handle(const std::span<const std::string> &params,
     } else {
       int i = 0;
       for (auto &replica : replicas) {
-        if (replica->is_session_closed() ||
+        auto replica_session = replica->get_session();
+        if (replica_session->is_session_closed() ||
             replica->get_expected_offset() == 0) {
           continue;
         }
-        handle_wait(replica.get(), needed, acks, deadline, session, timers[i++],
-                    timers);
+        handle_wait(replica, needed, acks, deadline, session,
+                    timers[i++], timers);
       }
     }
 

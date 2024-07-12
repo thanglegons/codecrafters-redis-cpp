@@ -3,6 +3,7 @@
 #include "Server.h"
 #include "Parser.h"
 #include "Helpers.h"
+#include "Replica.hpp"
 #include <thread>
 #include <iostream>
 #include <memory>
@@ -16,7 +17,7 @@
 Session::Session(asio::io_context &io_context, Server *server, bool is_master)
     : io_context_(io_context), socket_(io_context),
       command_handler_(server->data_, server->replication_info_, this),
-      is_master_session_(is_master), replicas_(server->replica_sessions_) {}
+      is_master_session_(is_master), replicas_(server->replica_manager_) {}
 
 tcp::socket &Session::get_socket() { return socket_; }
 
@@ -75,13 +76,12 @@ void Session::handle_write(const asio::error_code &error_code, size_t len)
 
 void Session::set_as_replica()
 {
-  is_replica_session_ = true;
   replicas_->add_replica(shared_from_this());
 }
 
 bool Session::is_master_session() const { return is_master_session_; }
 
-std::vector<std::shared_ptr<Session>> Session::get_replicas() const
+std::vector<std::shared_ptr<Replica>> Session::get_replicas() const
 {
   return replicas_->get_replicas();
 }
@@ -96,36 +96,4 @@ void Session::handle_message(const std::string message)
   std::cout << "Debug: receive message = " << message << "\n";
 
   command_handler_.handle_raw_command(message);
-}
-
-void Session::add_expected_offset(int delta)
-{
-  expected_offset += delta;
-}
-
-int Session::get_expected_offset() const
-{
-  return expected_offset;
-}
-
-int Session::get_actual_offset(int64_t deadline)
-{
-  asio::steady_timer timer(io_context_);
-  auto &socket = get_socket();
-  std::string command = Parser::encodeRespArray({"REPLCONF", "GETACK", "*"});
-  asio::write(socket, asio::buffer(command));
-  asio::streambuf buffer;
-  std::string response; 
-  std::future<size_t> fut = socket.async_read_some(asio::buffer(response), asio::use_future);
-  if (std::future_status::ready == fut.wait_until(std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(deadline))))
-  {
-    auto parsed = Parser::decode(response);
-    auto offset = std::stoi(parsed[0].back());
-    auto diff = offset - get_expected_offset();
-    std::cout << offset << " " << get_expected_offset() << "\n";
-    add_expected_offset(command.size());
-    return -1;
-  }
-  add_expected_offset(command.size());
-  return -1;
 }

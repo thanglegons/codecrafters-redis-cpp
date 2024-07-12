@@ -2,6 +2,7 @@
 #include "Helpers.h"
 #include "Parser.h"
 #include "Session.h"
+#include "Replica.hpp"
 #include <asio/completion_condition.hpp>
 #include <asio/connect.hpp>
 #include <asio/error_code.hpp>
@@ -19,7 +20,7 @@ Server::Server(asio::io_context &io_context, const ServerConfig &config)
     : acceptor_(io_context, tcp::endpoint(tcp::v4(), config.port)),
       io_context(io_context), data_(std::make_shared<KVStorage>()),
       replication_info_(init_replication_info(config)),
-      replica_sessions_(std::make_shared<ReplicaManager>())
+      replica_manager_(std::make_shared<ReplicaManager>())
 {
   if (!replication_info_->is_master && !master_handshake(config))
   {

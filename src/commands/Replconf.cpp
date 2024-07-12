@@ -8,9 +8,6 @@ std::optional<std::string>
 Replconf::inner_handle(const std::span<const std::string> &params,
                        Session* session) {
   if (params[0] == "GETACK") {
-    // if (rand() % 2 == 1) {
-    //   sleep(1);
-    // }
     auto offset = replication_info_->getOffset();
     return Parser::encodeRespArray(std::vector<std::string>{"REPLCONF", "ACK", std::to_string(offset)});
   }
