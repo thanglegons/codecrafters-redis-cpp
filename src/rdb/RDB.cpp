@@ -19,7 +19,7 @@ void read_sub_db(std::stringstream &ss, std::shared_ptr<KVStorage> &storage) {
       if (encoding == 0) {
         auto key = decode_string(ss);
         auto value = decode_string(ss);
-        storage->set(std::move(key), std::move(value), timestamp_ms);
+        storage->set_with_timestamp(std::move(key), std::move(value), timestamp_ms);
       }
     } else if (flag == 0xFD) {
       auto timestamp_s = read<int64_t>(ss);
@@ -27,7 +27,7 @@ void read_sub_db(std::stringstream &ss, std::shared_ptr<KVStorage> &storage) {
       if (encoding == 0) {
         auto key = decode_string(ss);
         auto value = decode_string(ss);
-        storage->set(std::move(key), std::move(value), timestamp_s * 1000);
+        storage->set_with_timestamp(std::move(key), std::move(value), timestamp_s * 1000);
       }
     } else {
       uint8_t encoding = flag;

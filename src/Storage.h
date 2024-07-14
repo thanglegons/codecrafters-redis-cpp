@@ -10,6 +10,8 @@ class KVStorage {
 public:
   void set(std::string k, std::string v, uint32_t expiring_time_ms = -1);
 
+  void set_with_timestamp(std::string k, std::string v, uint64_t timestamp);
+
   std::optional<std::string> get(const std::string &k) const;
 
   void update_info(std::string k, std::string v);
