@@ -18,6 +18,7 @@ std::optional<std::string> KVStorage::get(const std::string &k) const {
 }
 
 void KVStorage::set(std::string k, std::string v, uint32_t expiring_time_ms) {
+  std::cout << k << " " << v << " " << expiring_time_ms << " " << get_current_timestamp_ms() << "\n";
   uint64_t expired_ts_ms = expiring_time_ms == -1
                                ? std::numeric_limits<uint64_t>::max()
                                : get_current_timestamp_ms() + expiring_time_ms;
