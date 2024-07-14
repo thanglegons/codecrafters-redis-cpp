@@ -3,6 +3,7 @@
 #include "ReplicationInfo.h"
 #include "Session.h"
 #include "Storage.h"
+#include "commands/Keys.hpp"
 #include "commands/Command.h"
 #include "commands/Config.hpp"
 #include "commands/Echo.h"
@@ -34,7 +35,9 @@ CommandHandler::CommandHandler(
   command_map_.emplace("psync",
                        std::make_unique<commands::Psync>(replication_info_));
   command_map_.emplace("wait", std::make_unique<commands::Wait>());
-  command_map_.emplace("config", std::make_unique<commands::Config>(server_config_));
+  command_map_.emplace("config",
+                       std::make_unique<commands::Config>(server_config_));
+  command_map_.emplace("keys", std::make_unique<commands::Keys>(data_));
 }
 
 void CommandHandler::handle_raw_command(const std::string &raw_command) {

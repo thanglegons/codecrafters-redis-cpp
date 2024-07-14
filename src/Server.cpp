@@ -3,6 +3,7 @@
 #include "Parser.h"
 #include "Replica.hpp"
 #include "Session.h"
+#include "rdb/RDB.hpp"
 #include <asio/completion_condition.hpp>
 #include <asio/connect.hpp>
 #include <asio/error_code.hpp>
@@ -18,10 +19,14 @@
 
 Server::Server(asio::io_context &io_context, const ServerConfig &config)
     : acceptor_(io_context, tcp::endpoint(tcp::v4(), config.port)),
-      io_context(io_context), data_(std::make_shared<KVStorage>()),
-      replication_info_(init_replication_info(config)),
+      io_context(io_context), replication_info_(init_replication_info(config)),
       replica_manager_(std::make_shared<ReplicaManager>()),
       server_config_(std::make_shared<ServerConfig>(config)) {
+  if (config.rdb_info.has_value()) {
+    data_ = RDB::decode(config.rdb_info->dir + "/" + config.rdb_info->dbfilename);
+  } else {
+    data_ = std::make_shared<KVStorage>();
+  }
   if (!replication_info_->is_master && !master_handshake(config)) {
     throw std::runtime_error("Can't connect to master");
   }

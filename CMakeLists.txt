@@ -16,3 +16,9 @@ add_executable(server ${SOURCE_FILES})
 
 target_link_libraries(server PRIVATE asio asio::asio)
 target_link_libraries(server PRIVATE Threads::Threads)
+
+find_package(GTest CONFIG REQUIRED)
+enable_testing()
+add_executable(server_test ${PROJECT_SOURCE_DIR}/tests/main.cpp)
+target_link_libraries(server_test PRIVATE GTest::gtest GTest::gtest_main)
+add_test(AllTestsInMain server_test)
