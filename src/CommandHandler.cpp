@@ -3,16 +3,17 @@
 #include "ReplicationInfo.h"
 #include "Session.h"
 #include "Storage.h"
-#include "commands/Keys.hpp"
 #include "commands/Command.h"
 #include "commands/Config.hpp"
 #include "commands/Echo.h"
 #include "commands/Get.h"
 #include "commands/Info.h"
+#include "commands/Keys.hpp"
 #include "commands/Ping.h"
 #include "commands/Psync.h"
 #include "commands/Replconf.h"
 #include "commands/Set.h"
+#include "commands/Type.hpp"
 #include "commands/Wait.h"
 #include <algorithm>
 #include <iostream>
@@ -38,6 +39,7 @@ CommandHandler::CommandHandler(
   command_map_.emplace("config",
                        std::make_unique<commands::Config>(server_config_));
   command_map_.emplace("keys", std::make_unique<commands::Keys>(data_));
+  command_map_.emplace("type", std::make_unique<commands::Type>(data_));
 }
 
 void CommandHandler::handle_raw_command(const std::string &raw_command) {
