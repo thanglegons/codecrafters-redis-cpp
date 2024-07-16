@@ -10,7 +10,7 @@ std::optional<std::string> Get::inner_handle(const std::span<const std::string>&
     return std::nullopt;
   }
   const auto &key = params[0];
-  auto ret = data_->get(key);
+  auto ret = data_->get_string(key);
   if (ret == std::nullopt) {
     return std::nullopt;
   }

@@ -34,7 +34,7 @@ void read_sub_db(std::stringstream &ss, std::shared_ptr<KVStorage> &storage) {
       if (encoding == 0) {
         auto key = decode_string(ss);
         auto value = decode_string(ss);
-        storage->set(std::move(key), std::move(value));
+        storage->set_string(std::move(key), std::move(value));
       }
     }
   }

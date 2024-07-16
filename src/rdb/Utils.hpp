@@ -70,4 +70,5 @@ std::string decode_string(std::stringstream &ss) {
     auto val = read<int32_t>(ss);
     return std::to_string(val);
   }
+  return "";
 }

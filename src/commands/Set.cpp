@@ -13,11 +13,11 @@ Set::inner_handle(const std::span<const std::string> &params,
   auto key = params[0];
   auto value = params[1];
   if (num_params == 2) {
-    data_->set(std::move(key), std::move(value));
+    data_->set_string(std::move(key), std::move(value));
     return Parser::encodeString("OK");
   } else if (num_params == 4 && params[2] == "px") {
     auto expiring_time = std::stoi(params[3]);
-    data_->set(std::move(key), std::move(value), expiring_time);
+    data_->set_string(std::move(key), std::move(value), expiring_time);
     return Parser::encodeString("OK");
   }
   return std::nullopt;

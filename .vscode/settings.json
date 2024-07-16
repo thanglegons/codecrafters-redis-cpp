@@ -58,7 +58,16 @@
         "variant": "cpp",
         "vector": "cpp",
         "algorithm": "cpp",
-        "exception": "cpp"
+        "exception": "cpp",
+        "__tree": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "map": "cpp",
+        "set": "cpp",
+        "unordered_set": "cpp",
+        "version": "cpp",
+        "*.ipp": "cpp",
+        "__memory": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -15,6 +15,7 @@
 #include "commands/Set.h"
 #include "commands/Type.hpp"
 #include "commands/Wait.h"
+#include "commands/XADD.hpp"
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -40,6 +41,7 @@ CommandHandler::CommandHandler(
                        std::make_unique<commands::Config>(server_config_));
   command_map_.emplace("keys", std::make_unique<commands::Keys>(data_));
   command_map_.emplace("type", std::make_unique<commands::Type>(data_));
+  command_map_.emplace("xadd", std::make_unique<commands::XADD>(data_));
 }
 
 void CommandHandler::handle_raw_command(const std::string &raw_command) {
