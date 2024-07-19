@@ -16,15 +16,19 @@ XADD::inner_handle(const std::span<const std::string> &params,
   for (int i = 2; i < params.size(); i += 2) {
     pairs.emplace_back(params[i], params[i + 1]);
   }
-  auto ret = Parser::encodeString(id);
-  Stream::StreamError err;
-  data_->set_stream(std::move(key), std::move(id), std::move(pairs), err);
+  Stream::StreamError err = Stream::StreamError::OK;
+  auto ret = data_->set_stream(std::move(key), std::move(id), std::move(pairs), err);
   if (err == Stream::StreamError::OK) {
-    return ret;
+    if (!ret.has_value()) {
+      return std::nullopt;
+    }
+    return Parser::encodeString(ret.value());
   } else if (err == Stream::StreamError::entryIDIsZero) {
     return Parser::encodeSimpleError("ERR The ID specified in XADD must be greater than 0-0");
   } else if (err == Stream::StreamError::entryIDIsEqualOrSmaller) {
     return Parser::encodeSimpleError("ERR The ID specified in XADD is equal or smaller than the target stream top item");
+  } else if (err == Stream::StreamError::entryIDParsedError) {
+    return Parser::encodeSimpleError("ERR Failed to parse entry_id");
   }
   return std::nullopt;
 }
