@@ -36,6 +36,7 @@ struct Stream {
     std::string to_string() const;
 
     static const EntryID kZeroEntryID;
+    static const EntryID kMaxEntryID;
   };
 
   struct Entry {

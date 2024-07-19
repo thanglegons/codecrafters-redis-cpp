@@ -7,6 +7,8 @@
 #include <numeric>
 
 const Stream::EntryID Stream::EntryID::kZeroEntryID{0, 0};
+const Stream::EntryID Stream::EntryID::kMaxEntryID{
+    std::numeric_limits<int64_t>::max(), std::numeric_limits<int32_t>::max()};
 
 template <>
 std::string
@@ -107,7 +109,8 @@ std::optional<std::string> Stream::add_entry(Entry entry, StreamError &err) {
 //   return std::span<const Stream::Entry>(it, entries->end());
 // }
 
-// std::span<const Stream::Entry> Stream::extract_end_at(int64_t timestamp) const {
+// std::span<const Stream::Entry> Stream::extract_end_at(int64_t timestamp)
+// const {
 //   auto it = get_it_start_after(timestamp);
 //   return std::span<const Stream::Entry>(entries->begin(), it);
 // }
@@ -115,11 +118,21 @@ std::optional<std::string> Stream::add_entry(Entry entry, StreamError &err) {
 std::span<const Stream::Entry>
 Stream::extract_range(const std::string &raw_entry_id_start,
                       const std::string &raw_entry_id_end) const {
-  auto entry_id_start = Stream::EntryID::toEntryID(raw_entry_id_start, 0);
-  auto entry_id_end = Stream::EntryID::toEntryID(raw_entry_id_end, std::numeric_limits<int32_t>::max());
-  assert(entry_id_start < entry_id_end);
-  assert(entry_id_start.has_value());
-  assert(entry_id_end.has_value());
+  auto entry_id_start = raw_entry_id_start == "-"
+                            ? Stream::EntryID::kZeroEntryID
+                            : Stream::EntryID::toEntryID(raw_entry_id_start, 0);
+  auto entry_id_end =
+      raw_entry_id_end == "+"
+          ? Stream::EntryID::kMaxEntryID
+          : Stream::EntryID::toEntryID(raw_entry_id_end,
+                                       std::numeric_limits<int32_t>::max());
+  if (!entry_id_start.has_value() || !entry_id_end.has_value()) {
+    return {};
+  }
+  if (entry_id_end.value() < entry_id_start.value()) {
+    return {};
+  }
+  std::cout << entry_id_start->to_string() << " " << entry_id_end->to_string() << "\n";
   auto begin_it = get_it_start_at(entry_id_start.value());
   auto end_it = get_it_start_after(entry_id_end.value());
   return std::span<const Stream::Entry>(begin_it, end_it);
