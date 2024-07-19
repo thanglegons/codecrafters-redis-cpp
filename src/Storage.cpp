@@ -46,8 +46,9 @@ std::optional<std::string> KVStorage::set_stream(
     return std::nullopt;
   }
   Stream::Entry entry(std::move(entry_id.value()));
-  for (auto &&[ik, iv] : pairs) {
-    entry.inner_kv.emplace(std::move(ik), std::move(iv));
+  for (auto&& [k, v] : pairs) {
+    entry.inner_kv.emplace_back(std::move(k));
+    entry.inner_kv.emplace_back(std::move(v));
   }
   if (auto stream = get_stream(k); stream.has_value()) {
     return stream->add_entry(std::move(entry), err);

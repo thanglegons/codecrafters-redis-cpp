@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -20,9 +21,12 @@ struct Stream {
     EntryID(int64_t timestamp, int32_t sequence)
         : timestamp(timestamp), sequence(sequence) {}
 
-    static std::optional<EntryID> toEntryID(const std::string &s);
+    static std::optional<EntryID> toEntryID(const std::string &s,
+                                            int32_t default_sequence = -1);
 
     bool operator<=(const EntryID &other) const;
+
+    bool operator<(const EntryID &other) const;
 
     bool operator==(const EntryID &other) const = default;
 
@@ -37,7 +41,7 @@ struct Stream {
   struct Entry {
     explicit Entry(EntryID id) : id(std::move(id)) {}
     EntryID id;
-    std::unordered_map<std::string, std::string> inner_kv;
+    std::vector<std::string> inner_kv;
   };
 
   Stream() : entries(std::make_shared<std::vector<Entry>>()) {}
@@ -47,6 +51,18 @@ struct Stream {
 
   std::optional<std::string> add_entry(Entry entry, StreamError &err);
 
+  //   std::span<const Entry> extract_start_at(int64_t timestamp) const;
+
+  //   std::span<const Entry> extract_end_at(int64_t timestamp) const;
+
+  std::span<const Entry> extract_range(const std::string &start,
+                                       const std::string &end) const;
+
 private:
+  std::vector<Entry>::iterator get_it_start_at(const EntryID &entry_id) const;
+
+  std::vector<Entry>::iterator
+  get_it_start_after(const EntryID &enntry_id) const;
+
   std::shared_ptr<std::vector<Entry>> entries;
 };

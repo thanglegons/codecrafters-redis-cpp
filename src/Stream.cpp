@@ -1,15 +1,37 @@
 #include "Stream.hpp"
 #include "Helpers.h"
+#include "Parser.h"
+#include <algorithm>
+#include <cassert>
 #include <iostream>
+#include <numeric>
 
 const Stream::EntryID Stream::EntryID::kZeroEntryID{0, 0};
 
+template <>
+std::string
+Parser::encodeElementRespArray<Stream::Entry>(const Stream::Entry &entry) {
+  std::string result = "*2\r\n";
+  result += Parser::encodeBulkString(entry.id.to_string());
+  result += Parser::encodeRespArray(entry.inner_kv);
+  return result;
+}
+
 std::optional<Stream::EntryID>
-Stream::EntryID::toEntryID(const std::string &s) {
+Stream::EntryID::toEntryID(const std::string &s, int32_t default_sequence) {
   if (s == "*") {
     return std::make_optional<EntryID>(-1, -1);
   }
   auto parts = splitString(s, '-');
+  if (default_sequence >= 0 && parts.size() == 1) {
+    try {
+      int64_t timestamp = std::stoll(parts[0]);
+      return std::make_optional<EntryID>(timestamp, default_sequence);
+    } catch (std::exception &e) {
+      std::cout << "Failed to parse entry ID = " << s << "\n";
+      return std::nullopt;
+    }
+  }
   if (parts.size() != 2) {
     return std::nullopt;
   }
@@ -24,9 +46,13 @@ Stream::EntryID::toEntryID(const std::string &s) {
 }
 
 bool Stream::EntryID::operator<=(const EntryID &other) const {
-  if (*this == other) {
+  if (*this == other || *this < other) {
     return true;
   }
+  return false;
+}
+
+bool Stream::EntryID::operator<(const EntryID &other) const {
   if (timestamp == other.timestamp) {
     return sequence < other.sequence;
   }
@@ -73,4 +99,46 @@ std::optional<std::string> Stream::add_entry(Entry entry, StreamError &err) {
   entry.id = std::move(valid_entry_id.value());
   entries->emplace_back(std::move(entry));
   return entry.id.to_string();
+}
+
+// std::span<const Stream::Entry>
+// Stream::extract_start_at(int64_t timestamp) const {
+//   auto it = get_it_start_at(timestamp);
+//   return std::span<const Stream::Entry>(it, entries->end());
+// }
+
+// std::span<const Stream::Entry> Stream::extract_end_at(int64_t timestamp) const {
+//   auto it = get_it_start_after(timestamp);
+//   return std::span<const Stream::Entry>(entries->begin(), it);
+// }
+
+std::span<const Stream::Entry>
+Stream::extract_range(const std::string &raw_entry_id_start,
+                      const std::string &raw_entry_id_end) const {
+  auto entry_id_start = Stream::EntryID::toEntryID(raw_entry_id_start, 0);
+  auto entry_id_end = Stream::EntryID::toEntryID(raw_entry_id_end, std::numeric_limits<int32_t>::max());
+  assert(entry_id_start < entry_id_end);
+  assert(entry_id_start.has_value());
+  assert(entry_id_end.has_value());
+  auto begin_it = get_it_start_at(entry_id_start.value());
+  auto end_it = get_it_start_after(entry_id_end.value());
+  return std::span<const Stream::Entry>(begin_it, end_it);
+}
+
+std::vector<Stream::Entry>::iterator
+Stream::get_it_start_at(const Stream::EntryID &pv) const {
+  Stream::Entry entry_pv(pv);
+  return std::lower_bound(entries->begin(), entries->end(), entry_pv,
+                          [](const Stream::Entry &a, const Stream::Entry &b) {
+                            return a.id < b.id;
+                          });
+}
+
+std::vector<Stream::Entry>::iterator
+Stream::get_it_start_after(const Stream::EntryID &pv) const {
+  Stream::Entry entry_pv(pv);
+  return std::upper_bound(entries->begin(), entries->end(), entry_pv,
+                          [](const Stream::Entry &a, const Stream::Entry &b) {
+                            return a.id < b.id;
+                          });
 }

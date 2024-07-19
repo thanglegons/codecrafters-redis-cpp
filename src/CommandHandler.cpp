@@ -16,6 +16,7 @@
 #include "commands/Type.hpp"
 #include "commands/Wait.h"
 #include "commands/XADD.hpp"
+#include "commands/XRANGE.hpp"
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -42,6 +43,7 @@ CommandHandler::CommandHandler(
   command_map_.emplace("keys", std::make_unique<commands::Keys>(data_));
   command_map_.emplace("type", std::make_unique<commands::Type>(data_));
   command_map_.emplace("xadd", std::make_unique<commands::XADD>(data_));
+  command_map_.emplace("xrange", std::make_unique<commands::XRANGE>(data_));
 }
 
 void CommandHandler::handle_raw_command(const std::string &raw_command) {

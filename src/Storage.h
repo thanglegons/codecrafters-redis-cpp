@@ -11,6 +11,7 @@
 #include <variant>
 #include <vector>
 
+
 using ValueType = std::variant<std::string, Stream>;
 
 class KVStorage {
@@ -23,10 +24,9 @@ public:
 
   void set_string(std::string k, std::string v, uint32_t expiring_time_ms = -1);
 
-  std::optional<std::string>
-  set_stream(std::string k, std::string id,
-             std::vector<std::pair<std::string, std::string>> pairs,
-             Stream::StreamError &err, uint32_t expiring_time_ms = -1);
+  std::optional<std::string> set_stream(std::string k, std::string id,
+                  std::vector<std::pair<std::string, std::string>> pairs,
+                  Stream::StreamError &err, uint32_t expiring_time_ms = -1);
 
   void set_with_timestamp(std::string k, ValueType v, uint64_t timestamp);
 
