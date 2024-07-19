@@ -22,7 +22,7 @@ XADD::inner_handle(const std::span<const std::string> &params,
     if (!ret.has_value()) {
       return std::nullopt;
     }
-    return Parser::encodeString(ret.value());
+    return Parser::encodeBulkString(ret.value());
   } else if (err == Stream::StreamError::entryIDIsZero) {
     return Parser::encodeSimpleError("ERR The ID specified in XADD must be greater than 0-0");
   } else if (err == Stream::StreamError::entryIDIsEqualOrSmaller) {
