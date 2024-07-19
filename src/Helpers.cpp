@@ -1,6 +1,7 @@
 #include "Helpers.h"
 #include <chrono>
 #include <random>
+#include <sstream>
 
 uint64_t get_current_timestamp_ms() {
     auto now = std::chrono::system_clock::now();
@@ -25,4 +26,17 @@ std::string random_string(int n) {
     }
 
     return result;
+}
+
+std::vector<std::string> splitString(const std::string &s, char delim) {
+    std::istringstream iss(s);
+    std::vector<std::string> results;
+    std::string temp;
+    while (std::getline(iss, temp, delim)) {
+        results.emplace_back(temp);
+    }
+    if (!s.empty() && s.back() == delim) {
+        results.emplace_back();
+    }
+    return results;
 }

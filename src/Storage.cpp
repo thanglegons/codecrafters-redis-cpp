@@ -36,21 +36,28 @@ void KVStorage::set_string(std::string k, std::string v,
 void KVStorage::set_stream(
     std::string k, std::string id,
     std::vector<std::pair<std::string, std::string>> pairs,
-    uint32_t expiring_time_ms) {
+    Stream::StreamError &err, uint32_t expiring_time_ms) {
   uint64_t expired_ts_ms = expiring_time_ms == -1
                                ? std::numeric_limits<uint64_t>::max()
                                : get_current_timestamp_ms() + expiring_time_ms;
-  Stream::Entry entry(id);
+  auto entry_id = Stream::EntryID::toEntryID(id);
+  if (!entry_id.has_value()) {
+    err = Stream::StreamError::entryIDParsedError;
+    return;
+  }
+  Stream::Entry entry(std::move(entry_id.value()));
   for (auto &&[ik, iv] : pairs) {
     entry.inner_kv.emplace(std::move(ik), std::move(iv));
   }
   if (auto stream = get_stream(k); stream.has_value()) {
-    stream->add_entry(std::move(entry));
+    err = stream->add_entry(std::move(entry));
   } else {
     std::cout << "add new stream\n";
     Stream new_stream;
-    new_stream.add_entry(std::move(entry));
-    set_with_timestamp(std::move(k), std::move(new_stream), expired_ts_ms);
+    err = new_stream.add_entry(std::move(entry));
+    if (err == Stream::StreamError::OK) {
+      set_with_timestamp(std::move(k), std::move(new_stream), expired_ts_ms);
+    }
   }
 }
 

@@ -17,8 +17,16 @@ XADD::inner_handle(const std::span<const std::string> &params,
     pairs.emplace_back(params[i], params[i + 1]);
   }
   auto ret = Parser::encodeString(id);
-  data_->set_stream(std::move(key), std::move(id), std::move(pairs));
-  return ret;
+  Stream::StreamError err;
+  data_->set_stream(std::move(key), std::move(id), std::move(pairs), err);
+  if (err == Stream::StreamError::OK) {
+    return ret;
+  } else if (err == Stream::StreamError::entryIDIsZero) {
+    return Parser::encodeSimpleError("ERR The ID specified in XADD must be greater than 0-0");
+  } else if (err == Stream::StreamError::entryIDIsEqualOrSmaller) {
+    return Parser::encodeSimpleError("ERR The ID specified in XADD is equal or smaller than the target stream top item");
+  }
+  return std::nullopt;
 }
 
 } // namespace commands

@@ -1,27 +1,16 @@
 #pragma once
 
 #include "Helpers.h"
+#include "Stream.hpp"
 #include <cstdint>
+#include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <memory>
 
-struct Stream {
-  struct Entry {
-    explicit Entry(std::string id) : id(std::move(id)) {}
-    std::string id;
-    std::unordered_map<std::string, std::string> inner_kv;
-  };
-
-  Stream() : entries(std::make_shared<std::vector<Entry>>()) {}
-
-  std::shared_ptr<std::vector<Entry>> entries;
-
-  void add_entry(Entry entry) { entries->emplace_back(std::move(entry)); }
-};
 
 using ValueType = std::variant<std::string, Stream>;
 
@@ -37,7 +26,7 @@ public:
 
   void set_stream(std::string k, std::string id,
                   std::vector<std::pair<std::string, std::string>> pairs,
-                  uint32_t expiring_time_ms = -1);
+                  Stream::StreamError &err, uint32_t expiring_time_ms = -1);
 
   void set_with_timestamp(std::string k, ValueType v, uint64_t timestamp);
 
@@ -50,6 +39,7 @@ private:
     ValueType value;
     uint64_t expired_ts_ms;
   };
+
   mutable std::unordered_map<std::string, ExpiringValue> data_;
   std::unordered_map<std::string, std::string> info_;
 
