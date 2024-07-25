@@ -17,6 +17,7 @@
 #include "commands/Wait.h"
 #include "commands/XADD.hpp"
 #include "commands/XRANGE.hpp"
+#include "commands/XREAD.hpp"
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -44,6 +45,7 @@ CommandHandler::CommandHandler(
   command_map_.emplace("type", std::make_unique<commands::Type>(data_));
   command_map_.emplace("xadd", std::make_unique<commands::XADD>(data_));
   command_map_.emplace("xrange", std::make_unique<commands::XRANGE>(data_));
+  command_map_.emplace("xread", std::make_unique<commands::XREAD>(data_));
 }
 
 void CommandHandler::handle_raw_command(const std::string &raw_command) {

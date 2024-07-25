@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <span>
@@ -52,18 +53,41 @@ struct Stream {
 
   std::optional<std::string> add_entry(Entry entry, StreamError &err);
 
-  //   std::span<const Entry> extract_start_at(int64_t timestamp) const;
-
-  //   std::span<const Entry> extract_end_at(int64_t timestamp) const;
-
   std::span<const Entry> extract_range(const std::string &start,
                                        const std::string &end) const;
 
-private:
-  std::vector<Entry>::iterator get_it_start_at(const EntryID &entry_id) const;
+  std::span<const Entry> extract_from_exclusive(const std::string &start) const;
 
-  std::vector<Entry>::iterator
-  get_it_start_after(const EntryID &enntry_id) const;
+private:
+  template <bool Inclusive = true>
+  std::span<const Entry> inner_extract_range(const EntryID &start,
+                                             const EntryID &end) const {
+    auto begin_it = get_it<Inclusive>(start);
+    auto end_it = get_it<false>(end);
+    return std::span<const Stream::Entry>(begin_it, end_it);
+  }
+
+  template <bool Inclusive>
+  std::vector<Entry>::iterator get_it(const EntryID &entry_id) const {
+    Stream::Entry entry_pv(entry_id);
+    if constexpr (Inclusive) {
+      if (entry_id == EntryID::kZeroEntryID) {
+        return entries->begin();
+      }
+      return std::lower_bound(
+          entries->begin(), entries->end(), entry_pv,
+          [](const Stream::Entry &a, const Stream::Entry &b) {
+            return a.id < b.id;
+          });
+    }
+    if (entry_id == EntryID::kMaxEntryID) {
+      return entries->end();
+    }
+    return std::upper_bound(entries->begin(), entries->end(), entry_pv,
+                            [](const Stream::Entry &a, const Stream::Entry &b) {
+                              return a.id < b.id;
+                            });
+  }
 
   std::shared_ptr<std::vector<Entry>> entries;
 };

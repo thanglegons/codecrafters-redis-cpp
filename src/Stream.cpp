@@ -1,7 +1,6 @@
 #include "Stream.hpp"
 #include "Helpers.h"
 #include "Parser.h"
-#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <numeric>
@@ -12,7 +11,7 @@ const Stream::EntryID Stream::EntryID::kMaxEntryID{
 
 template <>
 std::string
-Parser::encodeElementRespArray<Stream::Entry>(const Stream::Entry &entry) {
+Parser::encodeRespArray<Stream::Entry>(const Stream::Entry &entry) {
   std::string result = "*2\r\n";
   result += Parser::encodeBulkString(entry.id.to_string());
   result += Parser::encodeRespArray(entry.inner_kv);
@@ -103,18 +102,6 @@ std::optional<std::string> Stream::add_entry(Entry entry, StreamError &err) {
   return entry.id.to_string();
 }
 
-// std::span<const Stream::Entry>
-// Stream::extract_start_at(int64_t timestamp) const {
-//   auto it = get_it_start_at(timestamp);
-//   return std::span<const Stream::Entry>(it, entries->end());
-// }
-
-// std::span<const Stream::Entry> Stream::extract_end_at(int64_t timestamp)
-// const {
-//   auto it = get_it_start_after(timestamp);
-//   return std::span<const Stream::Entry>(entries->begin(), it);
-// }
-
 std::span<const Stream::Entry>
 Stream::extract_range(const std::string &raw_entry_id_start,
                       const std::string &raw_entry_id_end) const {
@@ -132,26 +119,19 @@ Stream::extract_range(const std::string &raw_entry_id_start,
   if (entry_id_end.value() < entry_id_start.value()) {
     return {};
   }
-  std::cout << entry_id_start->to_string() << " " << entry_id_end->to_string() << "\n";
-  auto begin_it = get_it_start_at(entry_id_start.value());
-  auto end_it = get_it_start_after(entry_id_end.value());
-  return std::span<const Stream::Entry>(begin_it, end_it);
+  std::cout << entry_id_start->to_string() << " " << entry_id_end->to_string()
+            << "\n";
+  return inner_extract_range(entry_id_start.value(), entry_id_end.value());
 }
 
-std::vector<Stream::Entry>::iterator
-Stream::get_it_start_at(const Stream::EntryID &pv) const {
-  Stream::Entry entry_pv(pv);
-  return std::lower_bound(entries->begin(), entries->end(), entry_pv,
-                          [](const Stream::Entry &a, const Stream::Entry &b) {
-                            return a.id < b.id;
-                          });
-}
-
-std::vector<Stream::Entry>::iterator
-Stream::get_it_start_after(const Stream::EntryID &pv) const {
-  Stream::Entry entry_pv(pv);
-  return std::upper_bound(entries->begin(), entries->end(), entry_pv,
-                          [](const Stream::Entry &a, const Stream::Entry &b) {
-                            return a.id < b.id;
-                          });
+std::span<const Stream::Entry>
+Stream::extract_from_exclusive(const std::string &raw_entry_id_start) const {
+  auto entry_id_start = raw_entry_id_start == "-"
+                            ? Stream::EntryID::kZeroEntryID
+                            : Stream::EntryID::toEntryID(raw_entry_id_start, 0);
+  if (!entry_id_start.has_value()) {
+    return {};
+  }
+  return inner_extract_range<false>(entry_id_start.value(),
+                                    Stream::EntryID::kMaxEntryID);
 }

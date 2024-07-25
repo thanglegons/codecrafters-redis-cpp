@@ -52,7 +52,7 @@ std::string Parser::encodeBulkString(const std::string &str) {
 
 template <>
 std::string
-Parser::encodeElementRespArray<std::string>(const std::string &str) {
+Parser::encodeRespArray<std::string>(const std::string &str) {
   return encodeBulkString(str);
 }
 
