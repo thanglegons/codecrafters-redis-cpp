@@ -6,7 +6,7 @@
 namespace commands {
 struct XRANGE : public Command {
   XRANGE(const std::shared_ptr<KVStorage> data)
-      : Command(true, true), data_(data) {}
+      : Command(false), data_(data) {}
 
   ~XRANGE() = default;
 
