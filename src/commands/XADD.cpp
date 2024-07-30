@@ -17,11 +17,12 @@ XADD::inner_handle(const std::span<const std::string> &params,
     pairs.emplace_back(params[i], params[i + 1]);
   }
   Stream::StreamError err = Stream::StreamError::OK;
-  auto ret = data_->set_stream(std::move(key), std::move(id), std::move(pairs), err);
+  auto ret = data_->set_stream(key, std::move(id), std::move(pairs), err);
   if (err == Stream::StreamError::OK) {
     if (!ret.has_value()) {
       return std::nullopt;
     }
+    data_->trigger_waiting_timers(key);
     return Parser::encodeBulkString(ret.value());
   } else if (err == Stream::StreamError::entryIDIsZero) {
     return Parser::encodeSimpleError("ERR The ID specified in XADD must be greater than 0-0");

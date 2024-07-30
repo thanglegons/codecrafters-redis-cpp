@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <asio/steady_timer.hpp>
 #include <memory>
 #include <optional>
 #include <span>
@@ -57,6 +58,8 @@ struct Stream {
                                        const std::string &end) const;
 
   std::span<const Entry> extract_from_exclusive(const std::string &start) const;
+
+  void add_wating_timers(const std::shared_ptr<asio::steady_timer>& waiting_timer);
 
 private:
   template <bool Inclusive = true>

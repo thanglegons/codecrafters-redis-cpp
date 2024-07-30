@@ -33,10 +33,10 @@ void KVStorage::set_string(std::string k, std::string v,
   set_with_timestamp(std::move(k), std::move(v), expired_ts_ms);
 }
 
-std::optional<std::string> KVStorage::set_stream(
-    std::string k, std::string id,
-    std::vector<std::pair<std::string, std::string>> pairs,
-    Stream::StreamError &err, uint32_t expiring_time_ms) {
+std::optional<std::string>
+KVStorage::set_stream(std::string k, std::string id,
+                      std::vector<std::pair<std::string, std::string>> pairs,
+                      Stream::StreamError &err, uint32_t expiring_time_ms) {
   uint64_t expired_ts_ms = expiring_time_ms == -1
                                ? std::numeric_limits<uint64_t>::max()
                                : get_current_timestamp_ms() + expiring_time_ms;
@@ -46,7 +46,7 @@ std::optional<std::string> KVStorage::set_stream(
     return std::nullopt;
   }
   Stream::Entry entry(std::move(entry_id.value()));
-  for (auto&& [k, v] : pairs) {
+  for (auto &&[k, v] : pairs) {
     entry.inner_kv.emplace_back(std::move(k));
     entry.inner_kv.emplace_back(std::move(v));
   }
@@ -79,4 +79,18 @@ std::vector<std::string> KVStorage::get_keys() const {
     keys.emplace_back(k);
   }
   return keys;
+}
+
+void KVStorage::add_waiting_timers(
+    const std::string &key,
+    const std::shared_ptr<asio::steady_timer> &waiting_timer) const {
+  waiting_timers_[key].emplace_back(waiting_timer);
+}
+
+void KVStorage::trigger_waiting_timers(const std::string &key) {
+  auto timers = waiting_timers_[key];
+  waiting_timers_[key].clear();
+  for (auto& timer : timers) {
+    timer->cancel();
+  }
 }

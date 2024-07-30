@@ -10,8 +10,7 @@ const Stream::EntryID Stream::EntryID::kMaxEntryID{
     std::numeric_limits<int64_t>::max(), std::numeric_limits<int32_t>::max()};
 
 template <>
-std::string
-Parser::encodeRespArray<Stream::Entry>(const Stream::Entry &entry) {
+std::string Parser::encodeRespArray<Stream::Entry>(const Stream::Entry &entry) {
   std::string result = "*2\r\n";
   result += Parser::encodeBulkString(entry.id.to_string());
   result += Parser::encodeRespArray(entry.inner_kv);
