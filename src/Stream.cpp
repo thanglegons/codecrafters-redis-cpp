@@ -125,12 +125,21 @@ Stream::extract_range(const std::string &raw_entry_id_start,
 
 std::span<const Stream::Entry>
 Stream::extract_from_exclusive(const std::string &raw_entry_id_start) const {
-  auto entry_id_start = raw_entry_id_start == "-"
-                            ? Stream::EntryID::kZeroEntryID
-                            : Stream::EntryID::toEntryID(raw_entry_id_start, 0);
+  auto entry_id_start = [&raw_entry_id_start,
+                         this]() -> std::optional<Stream::EntryID> {
+    if (raw_entry_id_start == "$") {
+      return entries->back().id;
+    }
+    if (raw_entry_id_start == "-") {
+      return Stream::EntryID::kZeroEntryID;
+    }
+    return Stream::EntryID::toEntryID(raw_entry_id_start, 0);
+  }();
   if (!entry_id_start.has_value()) {
     return {};
   }
   return inner_extract_range<false>(entry_id_start.value(),
                                     Stream::EntryID::kMaxEntryID);
 }
+
+Stream::EntryID Stream::get_last_entry_id() const { return entries->back().id; }

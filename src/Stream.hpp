@@ -61,6 +61,8 @@ struct Stream {
 
   void add_wating_timers(const std::shared_ptr<asio::steady_timer>& waiting_timer);
 
+  EntryID get_last_entry_id() const;
+
 private:
   template <bool Inclusive = true>
   std::span<const Entry> inner_extract_range(const EntryID &start,

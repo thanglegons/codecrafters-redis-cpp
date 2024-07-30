@@ -28,7 +28,20 @@ XREAD::inner_handle(const std::span<const std::string> &params,
     try {
       auto timer =
           std::make_shared<asio::steady_timer>(session->get_io_context());
-      std::vector<std::string> span_cpy{params.begin() + 2, params.end()};
+      std::vector<std::string> span_cpy;
+      for (auto it = params.begin() + 2; it != params.end(); it++) {
+        if (*it == "$") {
+          const auto &key = *std::prev(it);
+          auto stream = data_->get_stream(key);
+          if (!stream.has_value()) {
+            span_cpy.emplace_back("0-1");
+          } else {
+            span_cpy.emplace_back(stream->get_last_entry_id().to_string());
+          }
+        } else {
+          span_cpy.emplace_back(*it);
+        }
+      }
       auto time_ms = std::stoi(params[1]);
       if (time_ms == 0) {
         // blocking no timeout
